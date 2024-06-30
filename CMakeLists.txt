@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.29.6)
 
 project(my_opengl VERSION 0.1.0 LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
 
 #include(GNUInstallDirs)
 include(CMakeDependentOption)
@@ -12,6 +13,7 @@ list(APPEND CMAKE_MODULE_PATH "${GLFW_SOURCE_DIR}/CMake/modules")
 
 find_package(Threads REQUIRED)
 find_package(glfw3 3.4 REQUIRED)
+find_package(glm REQUIRED)
 
 
 add_executable(triangle-opengl src/triangle-opengl.cpp)
