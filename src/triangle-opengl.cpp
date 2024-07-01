@@ -42,16 +42,9 @@
 
 typedef struct Vertex
 {
-    glm::vec2 pos;
+    glm::vec3 pos;
     glm::vec3 col;
 } Vertex;
-
-static const Vertex vertices[3] =
-{
-    { { -0.6f, -0.4f }, { 1.f, 0.f, 0.f } },
-    { {  0.6f, -0.4f }, { 0.f, 1.f, 0.f } },
-    { {   0.f,  0.6f }, { 0.f, 0.f, 1.f } }
-};
 
 static const char* vertex_shader_text = R"(
 #version 330
@@ -61,12 +54,12 @@ uniform mat4 view;
 uniform mat4 projection;
 
 in vec3 vCol;
-in vec2 vPos;
+in vec3 vPos;
 out vec3 color;
 
 void main()
 {
-    gl_Position = model * view * projection * vec4(vPos, 0.0, 1.0);
+    gl_Position = model * view * projection * vec4(vPos, 1.0);
     color = vCol;
 }
 
@@ -84,6 +77,98 @@ void main()
 
 )";
 
+class ShaderProgram {
+public:
+    GLuint program;
+    
+    GLint modelLoc;
+    GLint viewLoc;
+    GLint projectionLoc;
+
+    GLint vpos_location;
+    GLint vcol_location;
+public:
+    ShaderProgram()
+    {
+        const GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+        glShaderSource(vertex_shader, 1, &vertex_shader_text, NULL);
+        glCompileShader(vertex_shader);
+
+        const GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+        glShaderSource(fragment_shader, 1, &fragment_shader_text, NULL);
+        glCompileShader(fragment_shader);
+
+        program = glCreateProgram();
+        glAttachShader(program, vertex_shader);
+        glAttachShader(program, fragment_shader);
+        glLinkProgram(program);
+
+        modelLoc = glGetUniformLocation(program, "model");
+        viewLoc = glGetUniformLocation(program, "view");
+        projectionLoc = glGetUniformLocation(program, "projection");
+
+        vpos_location = glGetAttribLocation(program, "vPos");
+        vcol_location = glGetAttribLocation(program, "vCol");
+    }
+
+    void use()
+    {
+        glUseProgram(program);
+    }
+
+    void setModel(const glm::mat4& model)
+    {
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+    }
+
+    void setView(const glm::mat4& view)
+    {
+        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+    }
+
+    void setProjection(const glm::mat4& projection)
+    {
+        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+    }
+
+    void setVertexStream()
+    {
+        glEnableVertexAttribArray(vpos_location);
+        glVertexAttribPointer(vpos_location, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, pos));
+        glEnableVertexAttribArray(vcol_location);
+        glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, col));        
+    }
+};
+
+class VertexBuffer {
+    GLuint buffer;
+    GLuint array;
+    GLuint vpos_location;
+    GLuint vcol_location;
+    GLuint type;
+    size_t len;
+public:
+    VertexBuffer(const std::vector<Vertex>& points, const GLuint& type, const size_t& len, const GLuint& vpos_location, const GLuint& vcol_location)
+        : type(type), len(len), vpos_location(vpos_location), vcol_location(vcol_location)
+    {
+        glGenBuffers(1, &buffer);
+        glBindBuffer(GL_ARRAY_BUFFER, buffer);
+        glGenVertexArrays(1, &array);
+        glBindVertexArray(array);
+        glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(Vertex), points.data(), GL_STATIC_DRAW);
+        glEnableVertexAttribArray(vpos_location);
+        glVertexAttribPointer(vpos_location, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, pos));
+        glEnableVertexAttribArray(vcol_location);
+        glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, col));
+    }
+
+    void paint()
+    {
+        glBindVertexArray(array);
+        glDrawArrays(type, 0, len);
+    }
+};
+
 static void error_callback(int error, const char* description)
 {
     fprintf(stderr, "Error: %s\n", description);
@@ -97,6 +182,8 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 int main(void)
 {
+    using namespace std;
+
     glfwSetErrorCallback(error_callback);
 
     if (!glfwInit())
@@ -106,7 +193,7 @@ int main(void)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(640, 480, "OpenGL Triangle", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(512, 512, "OpenGL Triangle", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -119,59 +206,78 @@ int main(void)
     gladLoadGL(glfwGetProcAddress);
     glfwSwapInterval(1);
 
-    // NOTE: OpenGL error checks have been omitted for brevity
 
-    GLuint vertex_buffer;
-    glGenBuffers(1, &vertex_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    // glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(Vertex), points.data(), GL_STATIC_DRAW);
 
-    // std::vector<Vertex> points;
-    // for (auto i = 0; i <= 16; i++) {
-    //     auto angle = M_PI * 2.0 * i;
-    //     auto x = cos(angle);
-    //     auto y = sin(angle);
-    //     points.push_back(Vertex{{x, y}, {1.0, 1.0, 0.0}});
-    //     points.push_back(Vertex{{.9 * x, .9 * y}, {1.0, 0.0, 1.0}});
-    // }
-    // const size_t strip_len = 31;
+    // GLuint vertex_array;
+    // glGenVertexArrays(1, &vertex_array);
+    // glBindVertexArray(vertex_array);
+
+    ShaderProgram shaderProgram;
 
     std::vector<Vertex> points;
-    points.push_back(Vertex{{1.0, 0.0}, {1.0, 0.0, 1.0}});
-    points.push_back(Vertex{{0.8, 0.0}, {1.0, 1.0, 0.0}});
-    points.push_back(Vertex{{1.0, 0.1}, {0.0, 1.0, 1.0}});
-    points.push_back(Vertex{{0.8, 0.1}, {1.0, 0.0, 1.0}});
-    const size_t strip_len = 4;
-    glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(Vertex), points.data(), GL_STATIC_DRAW);
+    const float inner = .5;
+    const size_t loop_count = 16;
+    for (auto i = 0; i <= loop_count; i++) {
+        auto angle = M_PI * 2.0 * i / loop_count;
+        auto x = cos(angle);
+        auto y = sin(angle);
+        points.push_back(Vertex{{x, y, -.2f}, {float(i)/loop_count, 1.0, 1.0 - (float(i)/loop_count)}});
+        points.push_back(Vertex{{x, y, .2f}, {float(i)/loop_count, 1.0, 1.0 - (float(i)/loop_count)}});
+    }
+    VertexBuffer loop(points, GL_TRIANGLE_STRIP, points.size(), shaderProgram.vpos_location, shaderProgram.vcol_location);
 
-    const GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex_shader, 1, &vertex_shader_text, NULL);
-    glCompileShader(vertex_shader);
 
-    const GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &fragment_shader_text, NULL);
-    glCompileShader(fragment_shader);
+    std::vector<Vertex> lines;
+    lines.push_back(Vertex{{-1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}});
+    lines.push_back(Vertex{{1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}});
 
-    const GLuint program = glCreateProgram();
-    glAttachShader(program, vertex_shader);
-    glAttachShader(program, fragment_shader);
-    glLinkProgram(program);
+    lines.push_back(Vertex{{0.0f, -1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}});
+    lines.push_back(Vertex{{0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}});
 
-    const GLint modelLoc = glGetUniformLocation(program, "model");
-    const GLint viewLoc = glGetUniformLocation(program, "view");
-    const GLint projectionLoc = glGetUniformLocation(program, "projection");
+    lines.push_back(Vertex{{0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, 1.0f}});
+    lines.push_back(Vertex{{0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}});
+    VertexBuffer axes(lines, GL_LINES, 6, shaderProgram.vpos_location, shaderProgram.vcol_location);
 
-    const GLint vpos_location = glGetAttribLocation(program, "vPos");
-    const GLint vcol_location = glGetAttribLocation(program, "vCol");
+    std::vector<Vertex> xy_points;
+    for (size_t i = 0; i <= 128; i++) {
+        auto angle = (M_PI * 2.0 * float(i)) / 128.0;
+        xy_points.push_back(Vertex{{cos(angle), sin(angle), .0f}, {1.0f, 1.0f, 0.0f}});        
+    }
+    VertexBuffer xy_circle(xy_points, GL_LINE_STRIP, 129, shaderProgram.vpos_location, shaderProgram.vcol_location);
 
-    glm::mat4 view = glm::mat4(1.0f);
+    std::vector<Vertex> yz_points;
+    for (size_t i = 0; i <= 128; i++) {
+        auto angle = (M_PI * 2.0 * float(i)) / 128.0;
+        yz_points.push_back(Vertex{{.0f, cos(angle), sin(angle)}, {0.0f, 1.0f, 1.0f}});        
+    }
+    VertexBuffer yz_circle(yz_points, GL_LINE_STRIP, 129, shaderProgram.vpos_location, shaderProgram.vcol_location);
 
-    GLuint vertex_array;
-    glGenVertexArrays(1, &vertex_array);
-    glBindVertexArray(vertex_array);
-    glEnableVertexAttribArray(vpos_location);
-    glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, pos));
-    glEnableVertexAttribArray(vcol_location);
-    glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, col));
+    std::vector<Vertex> xz_points;
+    for (size_t i = 0; i <= 128; i++) {
+        auto angle = (M_PI * 2.0 * float(i)) / 128.0;
+        xz_points.push_back(Vertex{{cos(angle), 0.0f, sin(angle)}, {1.0f, 0.0f, 1.0f}});        
+    }
+    VertexBuffer xz_circle(xz_points, GL_LINE_STRIP, 129, shaderProgram.vpos_location, shaderProgram.vcol_location);
+
+    shaderProgram.setVertexStream();
+
+    // glm::mat4 view = glm::mat4(1.0f);
+    glm::mat4 view = glm::lookAt(
+        glm::vec3({0.0f, 0.0f, 0.0f}),
+        glm::vec3({-5.0f, -5.0f, -5.0f}),
+        glm::vec3({0.0f, 1.0f, 0.0f})
+            );
+
+    glm::mat4 projection = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, -2.0f, 2.0f);
+    // glm::mat4 projection = glm::perspectiveFov(3.1416f*.25f, 1.0f, 1.0f, .1f, 100.0f);
+    // glm::mat4 projection = glm::perspective(1.0f, 1.0f, .1f, 10.0f);
+    for (auto i = 0; i < 4; i++) {
+        for (auto j = 0; j < 4; j++) {
+            cout << projection[i][j] << ' ';
+        }
+        cout << endl;
+    }
 
     while (!glfwWindowShouldClose(window))
     {
@@ -184,20 +290,23 @@ int main(void)
         glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUseProgram(program);
+        shaderProgram.use();
 
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::rotate(model, (GLfloat)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+  
+        shaderProgram.setView(view);
 
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+        shaderProgram.setProjection(projection);
 
-        glm::mat4 projection = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f);
-        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+        shaderProgram.setModel(glm::mat4(1.0f));
+        axes.paint();
+        xy_circle.paint();
+        yz_circle.paint();
+        xz_circle.paint();
 
-        glBindVertexArray(vertex_array);
-        // glDrawArrays(GL_TRIANGLES, 0, 3);
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, strip_len);
+        auto model = glm::rotate(glm::mat4(1.0f), (GLfloat)glfwGetTime(), glm::vec3(0.0f, 0.05f, 0.0f));
+        shaderProgram.setModel(model);
+        // axes.paint();
+        loop.paint();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
