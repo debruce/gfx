@@ -59,7 +59,7 @@ out vec3 color;
 
 void main()
 {
-    gl_Position = model * view * projection * vec4(vPos, 1.0);
+    gl_Position = projection * view * model * vec4(vPos, 1.0);
     color = vCol;
 }
 
@@ -193,7 +193,7 @@ int main(void)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(512, 512, "OpenGL Triangle", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(1024, 768, "OpenGL Triangle", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -239,6 +239,21 @@ int main(void)
     lines.push_back(Vertex{{0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}});
     VertexBuffer axes(lines, GL_LINES, 6, shaderProgram.vpos_location, shaderProgram.vcol_location);
 
+    glm::vec3 white{1.0f, 1.0f, 1.0f};
+    std::vector<Vertex> box_points;
+    box_points.push_back(Vertex{{-1.0f, -1.0f, -1.0f}, white});
+    box_points.push_back(Vertex{{-1.0f, +1.0f, -1.0f}, white});
+    box_points.push_back(Vertex{{-1.0f, +1.0f, +1.0f}, white});
+    box_points.push_back(Vertex{{-1.0f, -1.0f, +1.0f}, white});
+    box_points.push_back(Vertex{{-1.0f, -1.0f, -1.0f}, white});
+
+    box_points.push_back(Vertex{{+1.0f, -1.0f, -1.0f}, white});
+    box_points.push_back(Vertex{{+1.0f, +1.0f, -1.0f}, white});
+    box_points.push_back(Vertex{{+1.0f, +1.0f, +1.0f}, white});
+    box_points.push_back(Vertex{{+1.0f, -1.0f, +1.0f}, white});
+    box_points.push_back(Vertex{{+1.0f, -1.0f, -1.0f}, white});
+    VertexBuffer box(box_points, GL_LINE_STRIP, 10, shaderProgram.vpos_location, shaderProgram.vcol_location);
+
     std::vector<Vertex> xy_points;
     for (size_t i = 0; i <= 128; i++) {
         auto angle = (M_PI * 2.0 * float(i)) / 128.0;
@@ -262,22 +277,11 @@ int main(void)
 
     shaderProgram.setVertexStream();
 
-    // glm::mat4 view = glm::mat4(1.0f);
     glm::mat4 view = glm::lookAt(
+        glm::vec3({-0.5f, -0.5f, -4.0f}),
         glm::vec3({0.0f, 0.0f, 0.0f}),
-        glm::vec3({-5.0f, -5.0f, -5.0f}),
         glm::vec3({0.0f, 1.0f, 0.0f})
             );
-
-    glm::mat4 projection = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, -2.0f, 2.0f);
-    // glm::mat4 projection = glm::perspectiveFov(3.1416f*.25f, 1.0f, 1.0f, .1f, 100.0f);
-    // glm::mat4 projection = glm::perspective(1.0f, 1.0f, .1f, 10.0f);
-    for (auto i = 0; i < 4; i++) {
-        for (auto j = 0; j < 4; j++) {
-            cout << projection[i][j] << ' ';
-        }
-        cout << endl;
-    }
 
     while (!glfwWindowShouldClose(window))
     {
@@ -286,6 +290,8 @@ int main(void)
         int width, height;
         glfwGetFramebufferSize(window, &width, &height);
         const float ratio = width / (float) height;
+
+        glm::mat4 projection = glm::perspectiveFov(3.1416f*.333f, 1.0, 1.0, .1f, 10.0f);
 
         glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -299,11 +305,12 @@ int main(void)
 
         shaderProgram.setModel(glm::mat4(1.0f));
         axes.paint();
-        xy_circle.paint();
-        yz_circle.paint();
-        xz_circle.paint();
+        box.paint();
+        // xy_circle.paint();
+        // yz_circle.paint();
+        // xz_circle.paint();
 
-        auto model = glm::rotate(glm::mat4(1.0f), (GLfloat)glfwGetTime(), glm::vec3(0.0f, 0.05f, 0.0f));
+        auto model = glm::rotate(glm::mat4(1.0f), (GLfloat)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
         shaderProgram.setModel(model);
         // axes.paint();
         loop.paint();
