@@ -39,7 +39,7 @@ vsg::ref_ptr<vsg::MatrixTransform> makeStovePipe(vsg::ref_ptr<vsg::Builder> buil
     return stove_pipe;
 }
 
-vsg::ref_ptr<vsg::MatrixTransform> makeAxes(vsg::ref_ptr<vsg::Builder> builder)
+vsg::ref_ptr<vsg::Group> makeAxes(vsg::ref_ptr<vsg::Builder> builder)
 {
     auto zStovePipe = makeStovePipe(builder, vsg::vec4{0.0f, 0.0f, 1.0f, 1.0f});
 
@@ -49,7 +49,7 @@ vsg::ref_ptr<vsg::MatrixTransform> makeAxes(vsg::ref_ptr<vsg::Builder> builder)
     auto yStovePipe = makeStovePipe(builder, vsg::vec4{0.0f, 1.0f, 0.0f, 1.0f});
     yStovePipe->matrix = vsg::rotate(vsg::radians(90.0f), 1.0f, 0.0f, 0.0f);
 
-    auto axes = vsg::MatrixTransform::create();
+    auto axes = vsg::Group::create();
     axes->addChild(zStovePipe);
     axes->addChild(xStovePipe);
     axes->addChild(yStovePipe);
@@ -61,81 +61,39 @@ std::tuple<vsg::ref_ptr<vsg::Node>, vsg::ref_ptr<vsg::MatrixTransform>> createTe
     auto builder = vsg::Builder::create();
     builder->options = options;
 
+    auto font = vsg::read_cast<vsg::Font>("fonts/times.vsgb", options);
     auto scene = vsg::Group::create();
+
+    vsg::ref_ptr<vsg::MatrixTransform> grab_node;
+
+    auto axes = makeAxes(builder);
+
+    grab_node = vsg::MatrixTransform::create();
+    grab_node->addChild(axes);
+    scene->addChild(grab_node);
 
     vsg::GeometryInfo geomInfo;
     vsg::StateInfo stateInfo;
 
-    vsg::ref_ptr<vsg::MatrixTransform> grab_node;
+    auto layout = vsg::StandardLayout::create();
+    layout->glyphLayout = vsg::StandardLayout::LEFT_TO_RIGHT_LAYOUT;
+    layout->horizontalAlignment = vsg::StandardLayout::CENTER_ALIGNMENT;
+    layout->verticalAlignment = vsg::StandardLayout::BOTTOM_ALIGNMENT;
+    layout->position = vsg::vec3(0.0, 0.0, 0.0);
+    layout->horizontal = vsg::vec3(0.1, 0.0, 0.0);
+    layout->vertical = vsg::vec3(0.0, 0.1, 0.0);
+    layout->color = vsg::vec4(0.0, 0.0, 0.0, 1.0);
+    auto text = vsg::Text::create();
+    text->text = vsg::stringValue::create("origin");
+    text->font = font;
+    text->layout = layout;
+    text->setup(0, options);
+    scene->addChild(text);
 
-    // auto zStovePipe = makeStovePipe(builder, vsg::vec4{0.0f, 0.0f, 1.0f, 1.0f});
-
-    // auto xStovePipe = makeStovePipe(builder, vsg::vec4{1.0f, 0.0f, 0.0f, 1.0f});
-    // xStovePipe->matrix = vsg::rotate(vsg::radians(90.0f), 0.0f, 1.0f, 0.0f);
-
-    // auto yStovePipe = makeStovePipe(builder, vsg::vec4{0.0f, 1.0f, 0.0f, 1.0f});
-    // yStovePipe->matrix = vsg::rotate(vsg::radians(90.0f), 1.0f, 0.0f, 0.0f);
-    // auto axes = makeAxes(builder);
-
-
-    for (auto i = 0; i < 5; i++) {
-        auto axes = makeAxes(builder);
-        axes->matrix = vsg::rotate(vsg::radians(45.0f * i), 0.0f, 1.0f, 0.0f) * vsg::translate(vsg::vec3(1.0f, 0.0f, 0.0f)) * vsg::scale(vsg::vec3(.2f, .2f, .2f));
-        scene->addChild(axes);
-        if (i == 2) grab_node = axes;
-
-        // auto loc = vsg::MatrixTransform::create();
-        // loc->matrix = vsg::rotate(vsg::radians(45.0f * i), 0.0f, 1.0f, 0.0f)
-        //     * vsg::translate(vsg::vec3(1.0f, 0.0f, 0.0f))
-        //     * vsg::scale(vsg::vec3(.2f, .2f, .2f));
-        // loc->addChild(zStovePipe);
-        // loc->addChild(xStovePipe);
-        // loc->addChild(yStovePipe);
-        // scene->addChild(loc);
-        // if (i == 2) grab_node = loc;
-    }
-
-    geomInfo.dx = {1.0f, 0.0f, 0.0f};
-    geomInfo.dy = {0.0f, 1.0f, 0.0f};
-    geomInfo.dz = {0.0f, 0.0f, 1.0f};
-    geomInfo.transform = vsg::rotate(0.0f, 1.0f, 0.0f, 0.0f);
-    geomInfo.color = vsg::vec4{ 1.0f, 1.0f, 1.0f, 1.0f };
-
-    // stateInfo.wireframe = true;
-    // auto vertices = vsg::vec3Array::create(
-    //     {{-0.5f, -0.5f, 0.0f},
-    //      {0.5f, -0.5f, 0.0f},
-    //      {0.5f, 0.5f, 0.0f},
-    //      {-0.5f, 0.5f, 0.0f}}); // VK_FORMAT_R32G32B32_SFLOAT, VK_VERTEX_INPUT_RATE_INSTANCE, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_SHARING_MODE_EXCLUSIVE
-
-    // auto colors = vsg::vec3Array::create(vertices->size(), vsg::vec3(1.0f, 1.0f, 1.0f));
-
-    // auto texcoords = vsg::vec2Array::create(
-    //     {{0.0f, 0.0f},
-    //      {1.0f, 0.0f},
-    //      {1.0f, 1.0f},
-    //      {0.0f, 1.0f}}); // VK_FORMAT_R32G32_SFLOAT, VK_VERTEX_INPUT_RATE_VERTEX, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_SHARING_MODE_EXCLUSIVE
-
-    // auto indices = vsg::ushortArray::create(
-    //     {0, 1, 2,
-    //      2, 3, 0}); // VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_SHARING_MODE_EXCLUSIVE
-
-
-    // auto vertexDraw = vsg::VertexIndexDraw::create();
-    // vertexDraw->assignArrays(vsg::DataList{vertices, colors, texcoords});
-    // vertexDraw->assignIndices(indices);
-    // vertexDraw->indexCount = static_cast<uint32_t>(indices->size());
-    // vertexDraw->instanceCount = 1;
-    // scene->addChild(vertexDraw);
-    // stateInfo.wireframe = false;
-
-    auto bounds = vsg::visit<vsg::ComputeBounds>(scene).bounds;
-    double diameter = vsg::length(bounds.max - bounds.min);
-    geomInfo.position.set(static_cast<float>((bounds.min.x + bounds.max.x) * 0.5), static_cast<float>((bounds.min.y + bounds.max.y) * 0.5), static_cast<float>(bounds.min.z));
-    geomInfo.dx.set(static_cast<float>(diameter), 0.0f, 0.0f);
-    geomInfo.dy.set(0.0f, static_cast<float>(diameter), 0.0f);
-
+    // scene->addChild(axes);
+    stateInfo.two_sided = true;
     scene->addChild(builder->createQuad(geomInfo, stateInfo));
+
     return std::make_tuple(scene, grab_node);
 }
 
@@ -346,7 +304,7 @@ int main(int argc, char** argv)
     while (viewer->advanceToNextFrame() && (numFrames < 0 || (numFrames--) > 0))
     {
         auto t = std::chrono::duration<double, std::chrono::seconds::period>(vsg::clock::now() - startTime).count();
-        grab_node->matrix = vsg::translate(vsg::vec3(0.0f, sin(t), 0.0f))
+        grab_node->matrix = vsg::translate(vsg::vec3(0.0f, sin(t), 1.0f))
             * vsg::scale(vsg::vec3(.2f, .2f, .2f)) * vsg::rotate(vsg::radians(45.0f * (float)sin(t)), 0.0f, 1.0f, 0.0f);
         // grab_node->matrix = vsg::rotate(vsg::radians(45.0f * (float)sin(t)), 0.0f, 1.0f, 0.0f);
 
