@@ -55,11 +55,10 @@ vsg::ref_ptr<vsg::Group> makeAxes(vsg::ref_ptr<vsg::Builder> builder)
     return axes;
 }
 
-class MakeText {
+class MakeText : public vsg::Inherit<vsg::MatrixTransform, MakeText> {
     vsg::ref_ptr<vsg::Options> options;
     vsg::ref_ptr<vsg::stringValue> label;
     vsg::ref_ptr<vsg::Text> text;
-    vsg::ref_ptr<vsg::MatrixTransform> tform;
 public:
     MakeText(const std::string& s, vsg::ref_ptr<vsg::Font> font, vsg::ref_ptr<vsg::Options> options) : options(options)
     {
@@ -80,24 +79,13 @@ public:
         text->layout = layout;
         text->setup(64);
 
-        tform = vsg::MatrixTransform::create();
-        tform->addChild(text);
-    }
-
-    operator vsg::ref_ptr<vsg::Node>()
-    {
-        return tform;
+        addChild(text);
     }
 
     void set(const std::string& s)
     {
         label->value() = vsg::make_string(s);
         text->setup(0, options);
-    }
-
-    vsg::t_mat4<double>& matrix()
-    {
-        return tform->matrix;
     }
 };
 
@@ -204,8 +192,8 @@ int main(int argc, char** argv)
     grab_node->addChild(axes);
     scene->addChild(grab_node);
 
-    auto text = MakeText("origin", font, options);
-    text.matrix() = vsg::scale(.2f, .2f, .2f);
+    auto text = MakeText::create("origin", font, options);
+    text->matrix = vsg::scale(.2f, .2f, .2f);
 
     scene->addChild(text);
 
@@ -271,9 +259,9 @@ int main(int argc, char** argv)
             * vsg::scale(vsg::vec3(.2f, .2f, .2f)) * vsg::rotate(vsg::radians(45.0f * (float)sin(t)), 0.0f, 1.0f, 0.0f);
         // grab_node->matrix = vsg::rotate(vsg::radians(45.0f * (float)sin(t)), 0.0f, 1.0f, 0.0f);
 
-        text.set(to_string(numFramesCompleted));
-        text.matrix() = vsg::rotate(vsg::radians(25.0f * (float)sin(3.0*t)), 0.0f, 0.0f, 1.0f) * vsg::scale(vsg::vec3{.2, .2, .2});
-        
+        text->set(to_string(numFramesCompleted));
+        text->matrix = vsg::rotate(vsg::radians(25.0f * (float)sin(3.0*t)), 0.0f, 0.0f, 1.0f) * vsg::scale(vsg::vec3{.2, .2, .2});
+
         // pass any events into EventHandlers assigned to the Viewer
         viewer->handleEvents();
         viewer->update();
