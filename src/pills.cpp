@@ -1,8 +1,7 @@
 #include <vsg/all.h>
+#include <vsgXchange/all.h>
 
-// #ifdef vsgXchange_FOUND
-#    include <vsgXchange/all.h>
-// #endif
+#include "Demangle.h"
 
 #include <iostream>
 #include <sstream>
@@ -16,6 +15,16 @@ ostream& operator<<(ostream& os, const vsg::GeometryInfo& gi)
     ss << "[ position=" << gi.position << " transform=" << gi.transform << " color=" << gi.color << " ]";
     return os << ss.str();
 }
+
+// template <typename T>
+// ostream& operator<<(ostream& os, const vsg::t_box<T>& box)
+// {
+//     stringstream ss;
+//     ss << "tbox[";
+//     for (auto i = 0; i < box.size(); i++) os << ' ' << box[i];
+//     ss << " ]";
+//     return os << ss.str();
+// }
 
 vsg::ref_ptr<vsg::MatrixTransform> makeStovePipe(vsg::ref_ptr<vsg::Builder> builder, const vsg::vec4& clr)
 {
@@ -56,25 +65,50 @@ vsg::ref_ptr<vsg::Group> makeAxes(vsg::ref_ptr<vsg::Builder> builder)
     return axes;
 }
 
-std::tuple<vsg::ref_ptr<vsg::Node>, vsg::ref_ptr<vsg::MatrixTransform>> createTestScene(vsg::ref_ptr<vsg::Options> options)
+class MakeText {
+public:
+    vsg::ref_ptr<vsg::Options> options;
+    vsg::ref_ptr<vsg::stringValue> label;
+    vsg::ref_ptr<vsg::Text> text;
+    vsg::ref_ptr<vsg::MatrixTransform> tform;
+
+    MakeText(const std::string& s, vsg::ref_ptr<vsg::Font> font, vsg::ref_ptr<vsg::Options> options) : options(options)
+    {
+        label = vsg::stringValue::create(s);
+        auto layout = vsg::StandardLayout::create();
+        layout->glyphLayout = vsg::StandardLayout::LEFT_TO_RIGHT_LAYOUT;
+        layout->horizontalAlignment = vsg::StandardLayout::CENTER_ALIGNMENT;
+        layout->verticalAlignment = vsg::StandardLayout::BOTTOM_ALIGNMENT;
+        layout->position = vsg::vec3(0.0, 0.0, 0.0);
+        layout->horizontal = vsg::vec3(1.0, 0.0, 0.0);
+        layout->vertical = vsg::vec3(0.0, 0.0, 1.0);
+        layout->color = vsg::vec4(0.0, 0.0, 0.0, 1.0);
+
+        text = vsg::Text::create();
+        text->technique = vsg::GpuLayoutTechnique::create();
+        text->text = label;
+        text->font = font;
+        text->layout = layout;
+        text->setup(64);
+
+        tform = vsg::MatrixTransform::create();
+        tform->addChild(text);
+    }
+
+    operator vsg::ref_ptr<vsg::Node>()
+    {
+        return tform;
+    }
+
+    void set(const std::string& s)
+    {
+        label->value() = vsg::make_string(s);
+        text->setup(0, options);
+    }
+};
+
+vsg::ref_ptr<vsg::MatrixTransform> makeText(const std::string& s, vsg::ref_ptr<vsg::Font> font, vsg::ref_ptr<vsg::Options> options)
 {
-    auto builder = vsg::Builder::create();
-    builder->options = options;
-
-    auto font = vsg::read_cast<vsg::Font>("fonts/times.vsgb", options);
-    auto scene = vsg::Group::create();
-
-    vsg::ref_ptr<vsg::MatrixTransform> grab_node;
-
-    auto axes = makeAxes(builder);
-
-    grab_node = vsg::MatrixTransform::create();
-    grab_node->addChild(axes);
-    scene->addChild(grab_node);
-
-    vsg::GeometryInfo geomInfo;
-    vsg::StateInfo stateInfo;
-
     auto layout = vsg::StandardLayout::create();
     layout->glyphLayout = vsg::StandardLayout::LEFT_TO_RIGHT_LAYOUT;
     layout->horizontalAlignment = vsg::StandardLayout::CENTER_ALIGNMENT;
@@ -84,17 +118,78 @@ std::tuple<vsg::ref_ptr<vsg::Node>, vsg::ref_ptr<vsg::MatrixTransform>> createTe
     layout->vertical = vsg::vec3(0.0, 0.0, 1.0);
     layout->color = vsg::vec4(0.0, 0.0, 0.0, 1.0);
     auto text = vsg::Text::create();
-    text->text = vsg::stringValue::create("origin");
+    text->text = vsg::stringValue::create(s);
+    text->technique = vsg::GpuLayoutTechnique::create();
     text->font = font;
     text->layout = layout;
-    text->setup(0, options);
-    scene->addChild(text);
+    text->setup(32);
+    // text->setup(0, options);
+    auto result = vsg::MatrixTransform::create();
+    result->addChild(text);
+    return result;
+}
 
-    // scene->addChild(axes);
-    stateInfo.two_sided = true;
-    scene->addChild(builder->createQuad(geomInfo, stateInfo));
+vsg::ref_ptr<vsg::Group> lightupScene(vsg::ref_ptr<vsg::Group> scene, const vsg::t_box<double>& bounds)
+{
+    auto span = vsg::length(bounds.max - bounds.min);
+    auto litScene = vsg::Group::create();
+    litScene->addChild(scene);
 
-    return std::make_tuple(scene, grab_node);
+    auto ambientLight = vsg::AmbientLight::create();
+    ambientLight->name = "ambient";
+    ambientLight->color.set(1.0f, 1.0f, 1.0f);
+    ambientLight->intensity = 0.01f;
+    litScene->addChild(ambientLight);
+
+    auto directionalLight = vsg::DirectionalLight::create();
+    directionalLight->name = "directional";
+    directionalLight->color.set(1.0f, 1.0f, 1.0f);
+    directionalLight->intensity = 0.85f;
+    directionalLight->direction.set(0.0f, -1.0f, -1.0f);
+    litScene->addChild(directionalLight);
+
+    // auto pointLight = vsg::PointLight::create();
+    // pointLight->name = "point";
+    // pointLight->color.set(1.0f, 1.0f, 0.0);
+    // pointLight->intensity = static_cast<float>(span * 0.5);
+    // pointLight->position.set(static_cast<float>(bounds.min.x), static_cast<float>(bounds.min.y), static_cast<float>(bounds.max.z + span * 0.3));
+    // // enable culling of the point light by decorating with a CullGroup
+    // auto cullGroup = vsg::CullGroup::create();
+    // cullGroup->bound.center = pointLight->position;
+    // cullGroup->bound.radius = span;
+    // cullGroup->addChild(pointLight);
+    // litScene->addChild(cullGroup);
+
+    // auto spotLight = vsg::SpotLight::create();
+    // spotLight->name = "spot";
+    // spotLight->color.set(0.0f, 1.0f, 1.0f);
+    // spotLight->intensity = static_cast<float>(span * 0.5);
+    // spotLight->position.set(static_cast<float>(bounds.max.x + span * 0.1), static_cast<float>(bounds.min.y - span * 0.1), static_cast<float>(bounds.max.z + span * 0.3));
+    // spotLight->direction = (bounds.min + bounds.max) * 0.5 - spotLight->position;
+    // spotLight->innerAngle = vsg::radians(8.0f);
+    // spotLight->outerAngle = vsg::radians(9.0f);
+    // // enable culling of the spot light by decorating with a CullGroup
+    // auto cullGroup = vsg::CullGroup::create();
+    // cullGroup->bound.center = spotLight->position;
+    // cullGroup->bound.radius = span;
+    // cullGroup->addChild(spotLight);
+    // litScene->addChild(cullGroup);
+
+    // auto ambientLight = vsg::AmbientLight::create();
+    // ambientLight->name = "ambient";
+    // ambientLight->color.set(1.0f, 1.0f, 1.0f);
+    // ambientLight->intensity = 0.1f;
+    // auto directionalLight = vsg::DirectionalLight::create();
+    // directionalLight->name = "head light";
+    // directionalLight->color.set(1.0f, 1.0f, 1.0f);
+    // directionalLight->intensity = 0.9f;
+    // directionalLight->direction.set(0.0f, 0.0f, -1.0f);
+    // auto absoluteTransform = vsg::AbsoluteTransform::create();
+    // absoluteTransform->addChild(ambientLight);
+    // absoluteTransform->addChild(directionalLight);
+    // litScene->addChild(absoluteTransform);
+
+    return litScene;
 }
 
 int main(int argc, char** argv)
@@ -102,11 +197,15 @@ int main(int argc, char** argv)
     auto options = vsg::Options::create();
     options->paths = vsg::getEnvPaths("VSG_FILE_PATH");
     options->sharedObjects = vsg::SharedObjects::create();
-
     options->add(vsgXchange::all::create());
 
+    auto builder = vsg::Builder::create();
+    builder->options = options;
+
+    auto font = vsg::read_cast<vsg::Font>("fonts/times.vsgb", options);
+
     auto windowTraits = vsg::WindowTraits::create();
-    windowTraits->windowTitle = "vsglights";
+    windowTraits->windowTitle = "pills";
 
     // set up defaults and read command line arguments to override them
     vsg::CommandLine arguments(&argc, argv);
@@ -124,135 +223,31 @@ int main(int argc, char** argv)
         windowTraits->swapchainPreferences.presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
         windowTraits->fullscreen = true;
     }
-    if (arguments.read("--st"))
-    {
-        windowTraits->swapchainPreferences.presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
-        windowTraits->width = 192, windowTraits->height = 108;
-        windowTraits->decoration = false;
-    }
 
-    // bool useStagingBuffer = arguments.read({"--staging-buffer", "-s"});
+    auto scene = vsg::Group::create();
 
-    auto outputFilename = arguments.value<vsg::Path>("", "-o");
+    auto axes = makeAxes(builder);
 
-    bool add_ambient = false;
-    bool add_directional = true;
-    bool add_point = false;
-    bool add_spotlight = false;
-    bool add_headlight = arguments.read("--headlight");
-    if (add_headlight || arguments.read({"--no-lights", "-n"}))
-    {
-        add_ambient = false;
-        add_directional = false;
-        add_point = false;
-        add_spotlight = false;
-    }
+    auto grab_node = vsg::MatrixTransform::create();
+    grab_node->addChild(axes);
+    scene->addChild(grab_node);
 
+    // auto text = makeText("origin", font, options);
+    auto text = MakeText("origin", font, options);
+    text.tform->matrix = vsg::scale(.2f, .2f, .2f);
 
-    auto tup = createTestScene(options);
-    auto scene = std::get<0>(tup);
-    auto grab_node = std::get<1>(tup);
+    scene->addChild(text);
+
+    // scene->addChild(axes);
+    vsg::GeometryInfo geomInfo;
+    vsg::StateInfo stateInfo;
+    stateInfo.two_sided = true;
+    scene->addChild(builder->createQuad(geomInfo, stateInfo));
 
     // compute the bounds of the scene graph to help position camera
     auto bounds = vsg::visit<vsg::ComputeBounds>(scene).bounds;
 
-    if (add_ambient || add_directional || add_point || add_spotlight || add_headlight)
-    {
-        auto span = vsg::length(bounds.max - bounds.min);
-        auto group = vsg::Group::create();
-        group->addChild(scene);
-
-        // ambient light
-        if (add_ambient)
-        {
-            auto ambientLight = vsg::AmbientLight::create();
-            ambientLight->name = "ambient";
-            ambientLight->color.set(1.0f, 1.0f, 1.0f);
-            ambientLight->intensity = 0.01f;
-            group->addChild(ambientLight);
-        }
-
-        // directional light
-        if (add_directional)
-        {
-            auto directionalLight = vsg::DirectionalLight::create();
-            directionalLight->name = "directional";
-            directionalLight->color.set(1.0f, 1.0f, 1.0f);
-            directionalLight->intensity = 0.85f;
-            directionalLight->direction.set(0.0f, -1.0f, -1.0f);
-            group->addChild(directionalLight);
-        }
-
-        // point light
-        if (add_point)
-        {
-            auto pointLight = vsg::PointLight::create();
-            pointLight->name = "point";
-            pointLight->color.set(1.0f, 1.0f, 0.0);
-            pointLight->intensity = static_cast<float>(span * 0.5);
-            pointLight->position.set(static_cast<float>(bounds.min.x), static_cast<float>(bounds.min.y), static_cast<float>(bounds.max.z + span * 0.3));
-
-            // enable culling of the point light by decorating with a CullGroup
-            auto cullGroup = vsg::CullGroup::create();
-            cullGroup->bound.center = pointLight->position;
-            cullGroup->bound.radius = span;
-
-            cullGroup->addChild(pointLight);
-
-            group->addChild(cullGroup);
-        }
-
-        // spot light
-        if (add_spotlight)
-        {
-            auto spotLight = vsg::SpotLight::create();
-            spotLight->name = "spot";
-            spotLight->color.set(0.0f, 1.0f, 1.0f);
-            spotLight->intensity = static_cast<float>(span * 0.5);
-            spotLight->position.set(static_cast<float>(bounds.max.x + span * 0.1), static_cast<float>(bounds.min.y - span * 0.1), static_cast<float>(bounds.max.z + span * 0.3));
-            spotLight->direction = (bounds.min + bounds.max) * 0.5 - spotLight->position;
-            spotLight->innerAngle = vsg::radians(8.0f);
-            spotLight->outerAngle = vsg::radians(9.0f);
-
-            // enable culling of the spot light by decorating with a CullGroup
-            auto cullGroup = vsg::CullGroup::create();
-            cullGroup->bound.center = spotLight->position;
-            cullGroup->bound.radius = span;
-
-            cullGroup->addChild(spotLight);
-
-            group->addChild(cullGroup);
-        }
-
-        if (add_headlight)
-        {
-            auto ambientLight = vsg::AmbientLight::create();
-            ambientLight->name = "ambient";
-            ambientLight->color.set(1.0f, 1.0f, 1.0f);
-            ambientLight->intensity = 0.1f;
-
-            auto directionalLight = vsg::DirectionalLight::create();
-            directionalLight->name = "head light";
-            directionalLight->color.set(1.0f, 1.0f, 1.0f);
-            directionalLight->intensity = 0.9f;
-            directionalLight->direction.set(0.0f, 0.0f, -1.0f);
-
-            auto absoluteTransform = vsg::AbsoluteTransform::create();
-            absoluteTransform->addChild(ambientLight);
-            absoluteTransform->addChild(directionalLight);
-
-            group->addChild(absoluteTransform);
-        }
-
-        scene = group;
-    }
-
-    // write out scene if required
-    if (outputFilename)
-    {
-        vsg::write(scene, outputFilename, options);
-        return 0;
-    }
+    scene = lightupScene(scene, bounds);
 
     // create the viewer and assign window(s) to it
     auto viewer = vsg::Viewer::create();
@@ -305,6 +300,8 @@ int main(int argc, char** argv)
             * vsg::scale(vsg::vec3(.2f, .2f, .2f)) * vsg::rotate(vsg::radians(45.0f * (float)sin(t)), 0.0f, 1.0f, 0.0f);
         // grab_node->matrix = vsg::rotate(vsg::radians(45.0f * (float)sin(t)), 0.0f, 1.0f, 0.0f);
 
+        text.set(to_string(numFramesCompleted));
+        text.tform->matrix = vsg::rotate(vsg::radians(25.0f * (float)sin(3.0*t)), 0.0f, 0.0f, 1.0f) * vsg::scale(vsg::vec3{.2, .2, .2});
         // pass any events into EventHandlers assigned to the Viewer
         viewer->handleEvents();
         viewer->update();
