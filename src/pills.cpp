@@ -1,8 +1,8 @@
 #include <vsg/all.h>
 
-#ifdef vsgXchange_FOUND
+// #ifdef vsgXchange_FOUND
 #    include <vsgXchange/all.h>
-#endif
+// #endif
 
 #include <iostream>
 #include <sstream>
@@ -80,8 +80,8 @@ std::tuple<vsg::ref_ptr<vsg::Node>, vsg::ref_ptr<vsg::MatrixTransform>> createTe
     layout->horizontalAlignment = vsg::StandardLayout::CENTER_ALIGNMENT;
     layout->verticalAlignment = vsg::StandardLayout::BOTTOM_ALIGNMENT;
     layout->position = vsg::vec3(0.0, 0.0, 0.0);
-    layout->horizontal = vsg::vec3(0.1, 0.0, 0.0);
-    layout->vertical = vsg::vec3(0.0, 0.1, 0.0);
+    layout->horizontal = vsg::vec3(1.0, 0.0, 0.0);
+    layout->vertical = vsg::vec3(0.0, 0.0, 1.0);
     layout->color = vsg::vec4(0.0, 0.0, 0.0, 1.0);
     auto text = vsg::Text::create();
     text->text = vsg::stringValue::create("origin");
@@ -103,10 +103,7 @@ int main(int argc, char** argv)
     options->paths = vsg::getEnvPaths("VSG_FILE_PATH");
     options->sharedObjects = vsg::SharedObjects::create();
 
-#ifdef vsgXchange_all
-    // add vsgXchange's support for reading and writing 3rd party file formats
     options->add(vsgXchange::all::create());
-#endif
 
     auto windowTraits = vsg::WindowTraits::create();
     windowTraits->windowTitle = "vsglights";
