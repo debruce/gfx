@@ -16,16 +16,6 @@ ostream& operator<<(ostream& os, const vsg::GeometryInfo& gi)
     return os << ss.str();
 }
 
-// template <typename T>
-// ostream& operator<<(ostream& os, const vsg::t_box<T>& box)
-// {
-//     stringstream ss;
-//     ss << "tbox[";
-//     for (auto i = 0; i < box.size(); i++) os << ' ' << box[i];
-//     ss << " ]";
-//     return os << ss.str();
-// }
-
 vsg::ref_ptr<vsg::MatrixTransform> makeStovePipe(vsg::ref_ptr<vsg::Builder> builder, const vsg::vec4& clr)
 {
     vsg::GeometryInfo geomInfo;
@@ -66,12 +56,11 @@ vsg::ref_ptr<vsg::Group> makeAxes(vsg::ref_ptr<vsg::Builder> builder)
 }
 
 class MakeText {
-public:
     vsg::ref_ptr<vsg::Options> options;
     vsg::ref_ptr<vsg::stringValue> label;
     vsg::ref_ptr<vsg::Text> text;
     vsg::ref_ptr<vsg::MatrixTransform> tform;
-
+public:
     MakeText(const std::string& s, vsg::ref_ptr<vsg::Font> font, vsg::ref_ptr<vsg::Options> options) : options(options)
     {
         label = vsg::stringValue::create(s);
@@ -105,29 +94,12 @@ public:
         label->value() = vsg::make_string(s);
         text->setup(0, options);
     }
-};
 
-vsg::ref_ptr<vsg::MatrixTransform> makeText(const std::string& s, vsg::ref_ptr<vsg::Font> font, vsg::ref_ptr<vsg::Options> options)
-{
-    auto layout = vsg::StandardLayout::create();
-    layout->glyphLayout = vsg::StandardLayout::LEFT_TO_RIGHT_LAYOUT;
-    layout->horizontalAlignment = vsg::StandardLayout::CENTER_ALIGNMENT;
-    layout->verticalAlignment = vsg::StandardLayout::BOTTOM_ALIGNMENT;
-    layout->position = vsg::vec3(0.0, 0.0, 0.0);
-    layout->horizontal = vsg::vec3(1.0, 0.0, 0.0);
-    layout->vertical = vsg::vec3(0.0, 0.0, 1.0);
-    layout->color = vsg::vec4(0.0, 0.0, 0.0, 1.0);
-    auto text = vsg::Text::create();
-    text->text = vsg::stringValue::create(s);
-    text->technique = vsg::GpuLayoutTechnique::create();
-    text->font = font;
-    text->layout = layout;
-    text->setup(32);
-    // text->setup(0, options);
-    auto result = vsg::MatrixTransform::create();
-    result->addChild(text);
-    return result;
-}
+    vsg::t_mat4<double>& matrix()
+    {
+        return tform->matrix;
+    }
+};
 
 vsg::ref_ptr<vsg::Group> lightupScene(vsg::ref_ptr<vsg::Group> scene, const vsg::t_box<double>& bounds)
 {
@@ -232,9 +204,8 @@ int main(int argc, char** argv)
     grab_node->addChild(axes);
     scene->addChild(grab_node);
 
-    // auto text = makeText("origin", font, options);
     auto text = MakeText("origin", font, options);
-    text.tform->matrix = vsg::scale(.2f, .2f, .2f);
+    text.matrix() = vsg::scale(.2f, .2f, .2f);
 
     scene->addChild(text);
 
@@ -301,7 +272,8 @@ int main(int argc, char** argv)
         // grab_node->matrix = vsg::rotate(vsg::radians(45.0f * (float)sin(t)), 0.0f, 1.0f, 0.0f);
 
         text.set(to_string(numFramesCompleted));
-        text.tform->matrix = vsg::rotate(vsg::radians(25.0f * (float)sin(3.0*t)), 0.0f, 0.0f, 1.0f) * vsg::scale(vsg::vec3{.2, .2, .2});
+        text.matrix() = vsg::rotate(vsg::radians(25.0f * (float)sin(3.0*t)), 0.0f, 0.0f, 1.0f) * vsg::scale(vsg::vec3{.2, .2, .2});
+        
         // pass any events into EventHandlers assigned to the Viewer
         viewer->handleEvents();
         viewer->update();
