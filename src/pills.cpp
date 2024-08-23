@@ -3,6 +3,7 @@
 #include <tinynurbs/tinynurbs.h>
 
 #include "Demangle.h"
+#include "DynamicText.h"
 
 #include <iostream>
 #include <sstream>
@@ -64,141 +65,9 @@ layout(location = 0) out vec4 color;
 void main() { color = vec4(1, 0, 0, 1); }
 )"};
 
-vsg::ref_ptr<vsg::MatrixTransform> makeStovePipe(vsg::ref_ptr<vsg::Builder> builder, const vsg::vec4& clr)
-{
-    vsg::GeometryInfo geomInfo;
-    vsg::StateInfo stateInfo;
+vsg::ref_ptr<vsg::Group> makeAxes(vsg::ref_ptr<vsg::Builder> builder);
 
-    float thickness = .05f;
-    geomInfo.dx = {thickness, 0.0f, 0.0f};
-    geomInfo.dy = {0.0f, thickness, 0.0f};
-    geomInfo.dz = {0.0f, 0.0f, 1.0f};
-    geomInfo.color = clr;
-    auto z_cylinder = builder->createCylinder(geomInfo, stateInfo);
-    geomInfo.dx = {.25f, 0.0f, 0.0f};
-    geomInfo.dy = {0.0f, .25f, 0.0f};
-    geomInfo.dz = {0.0f, 0.0f, .25f};
-    geomInfo.transform = vsg::translate(0.0f, 0.0f, 0.5f);
-    auto z_cone = builder->createCone(geomInfo, stateInfo);
-    auto stove_pipe = vsg::MatrixTransform::create();
-    stove_pipe->addChild(z_cylinder);
-    stove_pipe->addChild(z_cone);
-    return stove_pipe;
-}
-
-vsg::ref_ptr<vsg::Group> makeAxes(vsg::ref_ptr<vsg::Builder> builder)
-{
-    auto zStovePipe = makeStovePipe(builder, vsg::vec4{0.0f, 0.0f, 1.0f, 1.0f});
-
-    auto xStovePipe = makeStovePipe(builder, vsg::vec4{1.0f, 0.0f, 0.0f, 1.0f});
-    xStovePipe->matrix = vsg::rotate(vsg::radians(90.0f), 0.0f, 1.0f, 0.0f);
-
-    auto yStovePipe = makeStovePipe(builder, vsg::vec4{0.0f, 1.0f, 0.0f, 1.0f});
-    yStovePipe->matrix = vsg::rotate(vsg::radians(90.0f), 1.0f, 0.0f, 0.0f);
-
-    auto axes = vsg::Group::create();
-    axes->addChild(zStovePipe);
-    axes->addChild(xStovePipe);
-    axes->addChild(yStovePipe);
-    return axes;
-}
-
-class MakeText : public vsg::Inherit<vsg::MatrixTransform, MakeText> {
-    vsg::ref_ptr<vsg::Options> options;
-    vsg::ref_ptr<vsg::stringValue> label;
-    vsg::ref_ptr<vsg::Text> text;
-public:
-    MakeText(const std::string& s, vsg::ref_ptr<vsg::Font> font, vsg::ref_ptr<vsg::Options> options) : options(options)
-    {
-        label = vsg::stringValue::create(s);
-        auto layout = vsg::StandardLayout::create();
-        layout->glyphLayout = vsg::StandardLayout::LEFT_TO_RIGHT_LAYOUT;
-        layout->horizontalAlignment = vsg::StandardLayout::CENTER_ALIGNMENT;
-        layout->verticalAlignment = vsg::StandardLayout::BOTTOM_ALIGNMENT;
-        layout->position = vsg::vec3(0.0, 0.0, 0.0);
-        layout->horizontal = vsg::vec3(1.0, 0.0, 0.0);
-        layout->vertical = vsg::vec3(0.0, 0.0, 1.0);
-        layout->color = vsg::vec4(0.0, 0.0, 0.0, 1.0);
-
-        text = vsg::Text::create();
-        text->technique = vsg::GpuLayoutTechnique::create();
-        text->text = label;
-        text->font = font;
-        text->layout = layout;
-        text->setup(64);
-
-        addChild(text);
-    }
-
-    void set(const std::string& s)
-    {
-        label->value() = vsg::make_string(s);
-        text->setup(0, options);
-    }
-};
-
-vsg::ref_ptr<vsg::Group> lightupScene(vsg::ref_ptr<vsg::Group> scene, const vsg::t_box<double>& bounds)
-{
-    auto span = vsg::length(bounds.max - bounds.min);
-    auto litScene = vsg::Group::create();
-    litScene->addChild(scene);
-
-    auto ambientLight = vsg::AmbientLight::create();
-    ambientLight->name = "ambient";
-    ambientLight->color.set(1.0f, 1.0f, 1.0f);
-    ambientLight->intensity = 0.01f;
-    litScene->addChild(ambientLight);
-
-    auto directionalLight = vsg::DirectionalLight::create();
-    directionalLight->name = "directional";
-    directionalLight->color.set(1.0f, 1.0f, 1.0f);
-    directionalLight->intensity = 0.85f;
-    directionalLight->direction.set(0.0f, -1.0f, -1.0f);
-    litScene->addChild(directionalLight);
-
-    // auto pointLight = vsg::PointLight::create();
-    // pointLight->name = "point";
-    // pointLight->color.set(1.0f, 1.0f, 0.0);
-    // pointLight->intensity = static_cast<float>(span * 0.5);
-    // pointLight->position.set(static_cast<float>(bounds.min.x), static_cast<float>(bounds.min.y), static_cast<float>(bounds.max.z + span * 0.3));
-    // // enable culling of the point light by decorating with a CullGroup
-    // auto cullGroup = vsg::CullGroup::create();
-    // cullGroup->bound.center = pointLight->position;
-    // cullGroup->bound.radius = span;
-    // cullGroup->addChild(pointLight);
-    // litScene->addChild(cullGroup);
-
-    // auto spotLight = vsg::SpotLight::create();
-    // spotLight->name = "spot";
-    // spotLight->color.set(0.0f, 1.0f, 1.0f);
-    // spotLight->intensity = static_cast<float>(span * 0.5);
-    // spotLight->position.set(static_cast<float>(bounds.max.x + span * 0.1), static_cast<float>(bounds.min.y - span * 0.1), static_cast<float>(bounds.max.z + span * 0.3));
-    // spotLight->direction = (bounds.min + bounds.max) * 0.5 - spotLight->position;
-    // spotLight->innerAngle = vsg::radians(8.0f);
-    // spotLight->outerAngle = vsg::radians(9.0f);
-    // // enable culling of the spot light by decorating with a CullGroup
-    // auto cullGroup = vsg::CullGroup::create();
-    // cullGroup->bound.center = spotLight->position;
-    // cullGroup->bound.radius = span;
-    // cullGroup->addChild(spotLight);
-    // litScene->addChild(cullGroup);
-
-    // auto ambientLight = vsg::AmbientLight::create();
-    // ambientLight->name = "ambient";
-    // ambientLight->color.set(1.0f, 1.0f, 1.0f);
-    // ambientLight->intensity = 0.1f;
-    // auto directionalLight = vsg::DirectionalLight::create();
-    // directionalLight->name = "head light";
-    // directionalLight->color.set(1.0f, 1.0f, 1.0f);
-    // directionalLight->intensity = 0.9f;
-    // directionalLight->direction.set(0.0f, 0.0f, -1.0f);
-    // auto absoluteTransform = vsg::AbsoluteTransform::create();
-    // absoluteTransform->addChild(ambientLight);
-    // absoluteTransform->addChild(directionalLight);
-    // litScene->addChild(absoluteTransform);
-
-    return litScene;
-}
+vsg::ref_ptr<vsg::Group> lightupScene(vsg::ref_ptr<vsg::Group> scene, const float& ambientIntensity, const float& directionalIntensity, const vsg::vec3& direction);
 
 int main(int argc, char** argv)
 {
@@ -306,7 +175,7 @@ int main(int argc, char** argv)
     grab_node->addChild(axes);
     scene->addChild(grab_node);
 
-    auto text = MakeText::create("origin", font, options);
+    auto text = DynamicText::create("origin", font, options);
     text->matrix = vsg::scale(.2f, .2f, .2f);
 
     scene->addChild(text);
@@ -320,7 +189,7 @@ int main(int argc, char** argv)
     // compute the bounds of the scene graph to help position camera
     auto bounds = vsg::visit<vsg::ComputeBounds>(scene).bounds;
 
-    scene = lightupScene(scene, bounds);
+    scene = lightupScene(scene, .3f, .85f, vsg::vec3{0.0f, -1.0f, -1.0f});
 
     // create the viewer and assign window(s) to it
     auto viewer = vsg::Viewer::create();
