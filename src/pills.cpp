@@ -131,8 +131,6 @@ int main(int argc, char** argv)
         std::cout << "Line Rasterization Extension not supported.\n";
         return 1;
     }
-    // auto& requestedLineRasterizationFeatures = requestFeatures->get<VkPhysicalDeviceLineRasterizationFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT>();
-    // requestedLineRasterizationFeatures.bresenhamLines = VK_TRUE;
 
     auto shaderSet = makeLineShader();
 
