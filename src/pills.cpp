@@ -17,6 +17,53 @@ ostream& operator<<(ostream& os, const vsg::GeometryInfo& gi)
     return os << ss.str();
 }
 
+class ExtendedRasterizationState : public vsg::Inherit<vsg::RasterizationState, ExtendedRasterizationState>
+{
+public:
+    ExtendedRasterizationState() {}
+    ExtendedRasterizationState(const ExtendedRasterizationState& rs) :
+        Inherit(rs) {}
+
+    void apply(vsg::Context& context, VkGraphicsPipelineCreateInfo& pipelineInfo) const override
+    {
+        // create and assign the VkPipelineRasterizationStateCreateInfo as usual using the base class that wil assign it to pipelineInfo.pRasterizationState
+        RasterizationState::apply(context, pipelineInfo);
+
+        /// setup extension feature (stippling) for attachment to pNext below
+        auto rastLineStateCreateInfo = context.scratchMemory->allocate<VkPipelineRasterizationLineStateCreateInfoEXT>(1);
+        rastLineStateCreateInfo->sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_LINE_STATE_CREATE_INFO_EXT;
+        rastLineStateCreateInfo->pNext = nullptr;
+        rastLineStateCreateInfo->lineRasterizationMode = VK_LINE_RASTERIZATION_MODE_DEFAULT_EXT;
+        rastLineStateCreateInfo->stippledLineEnable = VK_TRUE;
+        rastLineStateCreateInfo->lineStippleFactor = 4;
+        rastLineStateCreateInfo->lineStipplePattern = 0b1111111100000000;
+
+        // to assign rastLineStateCreateInfo to the pRasterizationState->pNext we have to cast away const first
+        // this is safe as these objects haven't been passed to Vulkan yet
+        auto pRasterizationState = const_cast<VkPipelineRasterizationStateCreateInfo*>(pipelineInfo.pRasterizationState);
+        pRasterizationState->pNext = rastLineStateCreateInfo;
+    }
+
+protected:
+    virtual ~ExtendedRasterizationState() {}
+};
+
+std::string VERT{R"(
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
+layout(push_constant) uniform PushConstants { mat4 projection; mat4 modelView; };
+layout(location = 0) in vec3 vertex;
+out gl_PerVertex { vec4 gl_Position; };
+void main() { gl_Position = (projection * modelView) * vec4(vertex, 1.0); }
+)"};
+
+std::string FRAG{R"(
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
+layout(location = 0) out vec4 color;
+void main() { color = vec4(1, 0, 0, 1); }
+)"};
+
 vsg::ref_ptr<vsg::MatrixTransform> makeStovePipe(vsg::ref_ptr<vsg::Builder> builder, const vsg::vec4& clr)
 {
     vsg::GeometryInfo geomInfo;
@@ -172,6 +219,9 @@ int main(int argc, char** argv)
     vsg::CommandLine arguments(&argc, argv);
     windowTraits->debugLayer = arguments.read({"--debug", "-d"});
     windowTraits->apiDumpLayer = arguments.read({"--api", "-a"});
+    auto requestFeatures = windowTraits->deviceFeatures = vsg::DeviceFeatures::create();
+    windowTraits->vulkanVersion = VK_API_VERSION_1_1;
+    windowTraits->deviceExtensionNames.push_back(VK_EXT_LINE_RASTERIZATION_EXTENSION_NAME);
 
     arguments.read("--screen", windowTraits->screenNum);
     arguments.read("--display", windowTraits->display);
@@ -185,7 +235,70 @@ int main(int argc, char** argv)
         windowTraits->fullscreen = true;
     }
 
+    auto window = vsg::Window::create(windowTraits);
+    if (!window)
+    {
+        std::cout << "Could not create window." << std::endl;
+        return 1;
+    }
+
+    auto physicalDevice = window->getOrCreatePhysicalDevice();
+    if (!physicalDevice->supportsDeviceExtension(VK_EXT_LINE_RASTERIZATION_EXTENSION_NAME))
+    {
+        std::cout << "Line Rasterization Extension not supported.\n";
+        return 1;
+    }
+    auto& requestedLineRasterizationFeatures = requestFeatures->get<VkPhysicalDeviceLineRasterizationFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT>();
+    requestedLineRasterizationFeatures.bresenhamLines = VK_TRUE;
+
+    auto vertexShader = vsg::ShaderStage::create(VK_SHADER_STAGE_VERTEX_BIT, "main", VERT);
+    auto fragmentShader = vsg::ShaderStage::create(VK_SHADER_STAGE_FRAGMENT_BIT, "main", FRAG);
+    auto shaderSet = vsg::ShaderSet::create(vsg::ShaderStages{vertexShader, fragmentShader});
+    shaderSet->addPushConstantRange("pc", "", VK_SHADER_STAGE_VERTEX_BIT, 0, 128);
+    shaderSet->addAttributeBinding("vertex", "", 0, VK_FORMAT_R32G32B32_SFLOAT, vsg::vec3Array::create(1));
+
+    auto lineGroup = vsg::StateGroup::create();
+    auto gpConf = vsg::GraphicsPipelineConfigurator::create(shaderSet);
+
     auto scene = vsg::Group::create();
+
+    auto vertices = vsg::vec3Array::create({
+        {0, 0, 0},
+        {1, 0, 0},
+        {0, 1, 0},
+        {0, 0, 1},
+        {0, 0, 0},
+    });
+    vsg::DataList vertexArrays;
+    gpConf->assignArray(vertexArrays, "vertex", VK_VERTEX_INPUT_RATE_VERTEX, vertices);
+    auto vertexDraw = vsg::VertexDraw::create();
+    vertexDraw->assignArrays(vertexArrays);
+    vertexDraw->vertexCount = vertices->width();
+    vertexDraw->instanceCount = 1;
+    lineGroup->addChild(vertexDraw);
+
+    struct SetPipelineStates : public vsg::Visitor
+    {
+        void apply(vsg::Object& object) { object.traverse(*this); }
+        void apply(vsg::RasterizationState& rs)
+        {
+            rs.lineWidth = 2.0f;
+            rs.cullMode = VK_CULL_MODE_NONE;
+        }
+        void apply(vsg::InputAssemblyState& ias)
+        {
+            ias.topology = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+        }
+    } sps;
+
+    /// apply our custom RasterizationState to the GraphicsPipeline
+    auto rs = ExtendedRasterizationState::create();
+    gpConf->pipelineStates.push_back(rs);
+
+    gpConf->accept(sps);
+    gpConf->init();
+    gpConf->copyTo(lineGroup);
+    scene->addChild(lineGroup);
 
     auto axes = makeAxes(builder);
 
@@ -211,13 +324,6 @@ int main(int argc, char** argv)
 
     // create the viewer and assign window(s) to it
     auto viewer = vsg::Viewer::create();
-
-    auto window = vsg::Window::create(windowTraits);
-    if (!window)
-    {
-        std::cout << "Could not create window." << std::endl;
-        return 1;
-    }
 
     viewer->addWindow(window);
 
