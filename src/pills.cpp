@@ -1,5 +1,6 @@
 #include <vsg/all.h>
 #include <vsgXchange/all.h>
+#include <tinynurbs/tinynurbs.h>
 
 #include "Demangle.h"
 
