@@ -49,6 +49,12 @@ protected:
     virtual ~ExtendedRasterizationState() {}
 };
 
+vsg::ref_ptr<vsg::Group> makeAxes(vsg::ref_ptr<vsg::Builder> builder);
+
+vsg::ref_ptr<vsg::Group> lightupScene(vsg::ref_ptr<vsg::Group> scene, const float& ambientIntensity, const float& directionalIntensity, const vsg::vec3& direction);
+
+vsg::ref_ptr<vsg::ShaderSet> makeLineShader()
+{
 std::string VERT{R"(
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
@@ -65,9 +71,13 @@ layout(location = 0) out vec4 color;
 void main() { color = vec4(1, 0, 0, 1); }
 )"};
 
-vsg::ref_ptr<vsg::Group> makeAxes(vsg::ref_ptr<vsg::Builder> builder);
-
-vsg::ref_ptr<vsg::Group> lightupScene(vsg::ref_ptr<vsg::Group> scene, const float& ambientIntensity, const float& directionalIntensity, const vsg::vec3& direction);
+    auto vertexShader = vsg::ShaderStage::create(VK_SHADER_STAGE_VERTEX_BIT, "main", VERT);
+    auto fragmentShader = vsg::ShaderStage::create(VK_SHADER_STAGE_FRAGMENT_BIT, "main", FRAG);
+    auto shaderSet = vsg::ShaderSet::create(vsg::ShaderStages{vertexShader, fragmentShader});
+    shaderSet->addPushConstantRange("pc", "", VK_SHADER_STAGE_VERTEX_BIT, 0, 128);
+    shaderSet->addAttributeBinding("vertex", "", 0, VK_FORMAT_R32G32B32_SFLOAT, vsg::vec3Array::create(1));
+    return shaderSet;
+}
 
 int main(int argc, char** argv)
 {
@@ -88,7 +98,11 @@ int main(int argc, char** argv)
     vsg::CommandLine arguments(&argc, argv);
     windowTraits->debugLayer = arguments.read({"--debug", "-d"});
     windowTraits->apiDumpLayer = arguments.read({"--api", "-a"});
+
     auto requestFeatures = windowTraits->deviceFeatures = vsg::DeviceFeatures::create();
+    auto& requestedLineRasterizationFeatures = requestFeatures->get<VkPhysicalDeviceLineRasterizationFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT>();
+    requestedLineRasterizationFeatures.bresenhamLines = VK_TRUE;
+
     windowTraits->vulkanVersion = VK_API_VERSION_1_1;
     windowTraits->deviceExtensionNames.push_back(VK_EXT_LINE_RASTERIZATION_EXTENSION_NAME);
 
@@ -117,14 +131,10 @@ int main(int argc, char** argv)
         std::cout << "Line Rasterization Extension not supported.\n";
         return 1;
     }
-    auto& requestedLineRasterizationFeatures = requestFeatures->get<VkPhysicalDeviceLineRasterizationFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT>();
-    requestedLineRasterizationFeatures.bresenhamLines = VK_TRUE;
+    // auto& requestedLineRasterizationFeatures = requestFeatures->get<VkPhysicalDeviceLineRasterizationFeaturesEXT, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT>();
+    // requestedLineRasterizationFeatures.bresenhamLines = VK_TRUE;
 
-    auto vertexShader = vsg::ShaderStage::create(VK_SHADER_STAGE_VERTEX_BIT, "main", VERT);
-    auto fragmentShader = vsg::ShaderStage::create(VK_SHADER_STAGE_FRAGMENT_BIT, "main", FRAG);
-    auto shaderSet = vsg::ShaderSet::create(vsg::ShaderStages{vertexShader, fragmentShader});
-    shaderSet->addPushConstantRange("pc", "", VK_SHADER_STAGE_VERTEX_BIT, 0, 128);
-    shaderSet->addAttributeBinding("vertex", "", 0, VK_FORMAT_R32G32B32_SFLOAT, vsg::vec3Array::create(1));
+    auto shaderSet = makeLineShader();
 
     auto lineGroup = vsg::StateGroup::create();
     auto gpConf = vsg::GraphicsPipelineConfigurator::create(shaderSet);
