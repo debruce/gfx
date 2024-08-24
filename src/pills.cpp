@@ -22,7 +22,10 @@ vsg::ref_ptr<vsg::Group> makeAxes(vsg::ref_ptr<vsg::Builder> builder);
 
 vsg::ref_ptr<vsg::Group> lightupScene(vsg::ref_ptr<vsg::Group> scene, const float& ambientIntensity, const float& directionalIntensity, const vsg::vec3& direction);
 
-vsg::ref_ptr<vsg::GraphicsPipelineConfigurator> getPipelineConfigForLines();
+vsg::ref_ptr<vsg::ShaderSet> makeLineShader();
+// vsg::ref_ptr<vsg::GraphicsPipelineConfigurator> getPipelineConfigForLines(vsg::ref_ptr<vsg::ShaderSet>);
+vsg::ref_ptr<vsg::StateGroup> makeLineGroup(vsg::ref_ptr<vsg::ShaderSet> shaderSet, vsg::vec4 color, vsg::ref_ptr<vsg::vec3Array> vertices);
+
 
 int main(int argc, char** argv)
 {
@@ -70,28 +73,20 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    auto gpConf = getPipelineConfigForLines();
-
     auto scene = vsg::Group::create();
 
-    auto vertices = vsg::vec3Array::create({
-        {0, 0, 0},
-        {1, 0, 0},
-        {0, 1, 0},
-        {0, 0, 1},
-        {0, 0, 0},
-    });
-    vsg::DataList vertexArrays;
-    auto vertexDraw = vsg::VertexDraw::create();
-    vertexDraw->assignArrays(vertexArrays);
-    vertexDraw->vertexCount = vertices->width();
-    vertexDraw->instanceCount = 1;
-    auto lineGroup = vsg::StateGroup::create();
-    lineGroup->addChild(vertexDraw);
-    gpConf->assignArray(vertexArrays, "vertex", VK_VERTEX_INPUT_RATE_VERTEX, vertices);
-    gpConf->copyTo(lineGroup);
-
-    scene->addChild(lineGroup);
+    auto lineShader = makeLineShader();
+    scene->addChild(makeLineGroup(lineShader, vsg::vec4{1.0, 0.0, 0.0, 1.0}, vsg::vec3Array::create({
+        {-1.0, 0.0, 0.0}, {1.0, 0.0, 0.0},
+        {-1.0, -1.0, 0.0}, {1.0, -1.0, 0.0},
+        {-1.0, 1.0, 0.0}, {1.0, 1.0, 0.0},    
+        })));
+    scene->addChild(makeLineGroup(lineShader, vsg::vec4{0.0, 1.0, 0.0, 1.0}, vsg::vec3Array::create({
+        {0.0, -1.0, 0.0}, {0.0, 1.0, 0.0}
+        })));
+    scene->addChild(makeLineGroup(lineShader, vsg::vec4{0.0, 0.0, 1.0, 1.0}, vsg::vec3Array::create({
+        {0.0, 0.0, -1.0}, {0.0, 0.0, 1.0}
+        })));
 
     auto axes = makeAxes(builder);
 
@@ -107,6 +102,7 @@ int main(int argc, char** argv)
     // scene->addChild(axes);
     vsg::GeometryInfo geomInfo;
     vsg::StateInfo stateInfo;
+    geomInfo.color = vsg::vec4{.2, .2, .2, 1.0};
     stateInfo.two_sided = true;
     scene->addChild(builder->createQuad(geomInfo, stateInfo));
 
@@ -159,6 +155,7 @@ int main(int argc, char** argv)
             * vsg::scale(vsg::vec3(.2f, .2f, .2f)) * vsg::rotate(vsg::radians(45.0f * (float)sin(t)), 0.0f, 1.0f, 0.0f);
         // grab_node->matrix = vsg::rotate(vsg::radians(45.0f * (float)sin(t)), 0.0f, 1.0f, 0.0f);
 
+        // gpConf->assignDescriptor("color", vsg::vec4Array::create({{1.0f, sinf(t) * .5f + .5f, 0.0f, 1.0f}}));
         text->set(to_string(numFramesCompleted));
         text->matrix = vsg::rotate(vsg::radians(25.0f * (float)sin(3.0*t)), 0.0f, 0.0f, 1.0f) * vsg::scale(vsg::vec3{.2, .2, .2});
 
