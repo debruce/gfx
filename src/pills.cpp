@@ -23,8 +23,7 @@ vsg::ref_ptr<vsg::Group> makeAxes(vsg::ref_ptr<vsg::Builder> builder);
 vsg::ref_ptr<vsg::Group> lightupScene(vsg::ref_ptr<vsg::Group> scene, const float& ambientIntensity, const float& directionalIntensity, const vsg::vec3& direction);
 
 vsg::ref_ptr<vsg::ShaderSet> makeLineShader();
-// vsg::ref_ptr<vsg::GraphicsPipelineConfigurator> getPipelineConfigForLines(vsg::ref_ptr<vsg::ShaderSet>);
-vsg::ref_ptr<vsg::StateGroup> makeLineGroup(vsg::ref_ptr<vsg::ShaderSet> shaderSet, vsg::vec4 color, vsg::ref_ptr<vsg::vec3Array> vertices);
+vsg::ref_ptr<vsg::StateGroup> makeLineGroup(vsg::ref_ptr<vsg::ShaderSet> shaderSet, vsg::vec4 color, float thickness, vsg::ref_ptr<vsg::vec3Array> vertices);
 
 
 int main(int argc, char** argv)
@@ -76,15 +75,15 @@ int main(int argc, char** argv)
     auto scene = vsg::Group::create();
 
     auto lineShader = makeLineShader();
-    scene->addChild(makeLineGroup(lineShader, vsg::vec4{1.0, 0.0, 0.0, 1.0}, vsg::vec3Array::create({
+    scene->addChild(makeLineGroup(lineShader, vsg::vec4{1.0, 0.0, 0.0, 1.0}, 2.0, vsg::vec3Array::create({
         {-1.0, 0.0, 0.0}, {1.0, 0.0, 0.0},
         {-1.0, -1.0, 0.0}, {1.0, -1.0, 0.0},
         {-1.0, 1.0, 0.0}, {1.0, 1.0, 0.0},    
         })));
-    scene->addChild(makeLineGroup(lineShader, vsg::vec4{0.0, 1.0, 0.0, 1.0}, vsg::vec3Array::create({
+    scene->addChild(makeLineGroup(lineShader, vsg::vec4{0.0, 1.0, 0.0, 1.0}, 2.0, vsg::vec3Array::create({
         {0.0, -1.0, 0.0}, {0.0, 1.0, 0.0}
         })));
-    scene->addChild(makeLineGroup(lineShader, vsg::vec4{0.0, 0.0, 1.0, 1.0}, vsg::vec3Array::create({
+    scene->addChild(makeLineGroup(lineShader, vsg::vec4{0.0, 0.0, 1.0, 1.0}, 4.0, vsg::vec3Array::create({
         {0.0, 0.0, -1.0}, {0.0, 0.0, 1.0}
         })));
 

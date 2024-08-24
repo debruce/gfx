@@ -89,22 +89,26 @@ void main()
     return shaderSet;
 }
 
-static vsg::ref_ptr<vsg::GraphicsPipelineConfigurator> getPipelineConfigForLines(vsg::ref_ptr<vsg::ShaderSet> shaderSet)
+static vsg::ref_ptr<vsg::GraphicsPipelineConfigurator> getPipelineConfigForLines(vsg::ref_ptr<vsg::ShaderSet> shaderSet, float thickness)
 {
     auto gpConf = vsg::GraphicsPipelineConfigurator::create(shaderSet);
     struct SetPipelineStates : public vsg::Visitor
     {
+        float th;
+
+        SetPipelineStates(float th) : th(th) {}
+
         void apply(vsg::Object& object) { object.traverse(*this); }
         void apply(vsg::RasterizationState& rs)
         {
-            rs.lineWidth = 2.0f;
+            rs.lineWidth = th;
             rs.cullMode = VK_CULL_MODE_NONE;
         }
         void apply(vsg::InputAssemblyState& ias)
         {
             ias.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
         }
-    } sps;
+    } sps(thickness);
 
     gpConf->pipelineStates.push_back(ExtendedRasterizationState::create());
     gpConf->accept(sps);
@@ -112,9 +116,9 @@ static vsg::ref_ptr<vsg::GraphicsPipelineConfigurator> getPipelineConfigForLines
     return gpConf;
 }
 
-vsg::ref_ptr<vsg::StateGroup> makeLineGroup(vsg::ref_ptr<vsg::ShaderSet> shaderSet, vsg::vec4 color, vsg::ref_ptr<vsg::vec3Array> vertices)
+vsg::ref_ptr<vsg::StateGroup> makeLineGroup(vsg::ref_ptr<vsg::ShaderSet> shaderSet, vsg::vec4 color, float thickness, vsg::ref_ptr<vsg::vec3Array> vertices)
 {
-    auto gpConf = getPipelineConfigForLines(shaderSet);
+    auto gpConf = getPipelineConfigForLines(shaderSet, thickness);
     vsg::DataList vertexArrays;
     gpConf->assignArray(vertexArrays, "vertex", VK_VERTEX_INPUT_RATE_VERTEX, vertices);
     auto vertexDraw = vsg::VertexDraw::create();
