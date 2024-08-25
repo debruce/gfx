@@ -137,40 +137,6 @@ vsg::ref_ptr<vsg::StateGroup> makeLineGroup(vsg::ref_ptr<vsg::ShaderSet> shaderS
     return lineGroup; 
 }
 
-class LocalText : public vsg::Inherit<vsg::MatrixTransform, LocalText> {
-    vsg::ref_ptr<vsg::Options> options;
-    vsg::ref_ptr<vsg::stringValue> label;
-    vsg::ref_ptr<vsg::Text> text;
-public:
-    LocalText(const std::string& s, vsg::ref_ptr<vsg::Font> font, vsg::ref_ptr<vsg::Options> options) : options(options)
-    {
-        label = vsg::stringValue::create(s);
-        auto layout = vsg::StandardLayout::create();
-        layout->glyphLayout = vsg::StandardLayout::LEFT_TO_RIGHT_LAYOUT;
-        layout->horizontalAlignment = vsg::StandardLayout::CENTER_ALIGNMENT;
-        layout->verticalAlignment = vsg::StandardLayout::BOTTOM_ALIGNMENT;
-        layout->position = vsg::vec3(0.0, 0.0, 0.0);
-        layout->horizontal = vsg::vec3(1.0, 0.0, 0.0);
-        layout->vertical = vsg::vec3(0.0, 0.0, 1.0);
-        layout->color = vsg::vec4(0.0, 0.0, 0.0, 1.0);
-
-        text = vsg::Text::create();
-        text->technique = vsg::GpuLayoutTechnique::create();
-        text->text = label;
-        text->font = font;
-        text->layout = layout;
-        text->setup(64);
-
-        addChild(text);
-    }
-
-    void set(const std::string& s)
-    {
-        label->value() = vsg::make_string(s);
-        text->setup(0, options);
-    }
-};
-
 vsg::ref_ptr<vsg::StateGroup> makeXYGrid(vsg::ref_ptr<vsg::ShaderSet> shaderSet, vsg::ref_ptr<vsg::Font> font, vsg::ref_ptr<vsg::Options> options, vsg::vec4 color, float thickness, size_t mx, float scale, bool annotate)
 {
     size_t line_count = 2 * mx + 1;
@@ -197,7 +163,7 @@ vsg::ref_ptr<vsg::StateGroup> makeXYGrid(vsg::ref_ptr<vsg::ShaderSet> shaderSet,
                 float yoff = float(yi) * scale - grid_max;
                 stringstream ss;
 
-                ss << fixed << setprecision(2) << '(' << xoff <<  ',' << yoff << ')';
+                ss << fixed << setprecision(1) << '(' << xoff <<  ',' << yoff << ')';
                 auto layout = vsg::StandardLayout::create();
                 layout->glyphLayout = vsg::StandardLayout::LEFT_TO_RIGHT_LAYOUT;
                 layout->horizontalAlignment = vsg::StandardLayout::CENTER_ALIGNMENT;
@@ -205,7 +171,7 @@ vsg::ref_ptr<vsg::StateGroup> makeXYGrid(vsg::ref_ptr<vsg::ShaderSet> shaderSet,
                 layout->position = vsg::vec3(xoff, yoff, 0.0);
                 layout->horizontal = vsg::vec3(scale*.1, 0.0, 0.0);
                 layout->vertical = vsg::vec3(0.0, 0.0, scale*.1);
-                layout->color = vsg::vec4(0.0, 0.0, 0.0, 1.0);
+                layout->color = color;
 
                 auto text = vsg::Text::create();
                 text->technique = vsg::GpuLayoutTechnique::create();
