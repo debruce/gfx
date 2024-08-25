@@ -24,6 +24,7 @@ vsg::ref_ptr<vsg::Group> lightupScene(vsg::ref_ptr<vsg::Group> scene, const floa
 
 vsg::ref_ptr<vsg::ShaderSet> makeLineShader();
 vsg::ref_ptr<vsg::StateGroup> makeLineGroup(vsg::ref_ptr<vsg::ShaderSet> shaderSet, vsg::vec4 color, float thickness, vsg::ref_ptr<vsg::vec3Array> vertices);
+vsg::ref_ptr<vsg::StateGroup> makeXYGrid(vsg::ref_ptr<vsg::ShaderSet> shaderSet, vsg::ref_ptr<vsg::Font> font, vsg::ref_ptr<vsg::Options> options, vsg::vec4 color, float thickness, size_t mx, float scale, bool annotate);
 
 
 int main(int argc, char** argv)
@@ -75,17 +76,8 @@ int main(int argc, char** argv)
     auto scene = vsg::Group::create();
 
     auto lineShader = makeLineShader();
-    scene->addChild(makeLineGroup(lineShader, vsg::vec4{1.0, 0.0, 0.0, 1.0}, 2.0, vsg::vec3Array::create({
-        {-1.0, 0.0, 0.0}, {1.0, 0.0, 0.0},
-        {-1.0, -1.0, 0.0}, {1.0, -1.0, 0.0},
-        {-1.0, 1.0, 0.0}, {1.0, 1.0, 0.0},    
-        })));
-    scene->addChild(makeLineGroup(lineShader, vsg::vec4{0.0, 1.0, 0.0, 1.0}, 2.0, vsg::vec3Array::create({
-        {0.0, -1.0, 0.0}, {0.0, 1.0, 0.0}
-        })));
-    scene->addChild(makeLineGroup(lineShader, vsg::vec4{0.0, 0.0, 1.0, 1.0}, 4.0, vsg::vec3Array::create({
-        {0.0, 0.0, -1.0}, {0.0, 0.0, 1.0}
-        })));
+    scene->addChild(makeXYGrid(lineShader, font, options, vsg::vec4{1.0, 1.0, 1.0, 1.0}, 1.5, 10, 1.0, true));
+    scene->addChild(makeXYGrid(lineShader, font, options, vsg::vec4{.5, 0.5, 0.5, 1.0}, 1.0, 100, .1, false));
 
     auto axes = makeAxes(builder);
 
