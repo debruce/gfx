@@ -203,8 +203,8 @@ vsg::ref_ptr<vsg::StateGroup> makeXYGrid(vsg::ref_ptr<vsg::ShaderSet> shaderSet,
                 layout->horizontalAlignment = vsg::StandardLayout::CENTER_ALIGNMENT;
                 layout->verticalAlignment = vsg::StandardLayout::BOTTOM_ALIGNMENT;
                 layout->position = vsg::vec3(xoff, yoff, 0.0);
-                layout->horizontal = vsg::vec3(.1, 0.0, 0.0);
-                layout->vertical = vsg::vec3(0.0, 0.0, .1);
+                layout->horizontal = vsg::vec3(scale*.1, 0.0, 0.0);
+                layout->vertical = vsg::vec3(0.0, 0.0, scale*.1);
                 layout->color = vsg::vec4(0.0, 0.0, 0.0, 1.0);
 
                 auto text = vsg::Text::create();
