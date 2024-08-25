@@ -33,9 +33,7 @@ protected:
     virtual ~ExtendedRasterizationState() {}
 };
 
-vsg::ref_ptr<vsg::ShaderSet> makeLineShader()
-{
-std::string VERT{R"(
+static std::string VERT{R"(
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
@@ -65,7 +63,7 @@ void main()
 
 )"};
 
-std::string FRAG{R"(
+static std::string FRAG{R"(
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
@@ -79,7 +77,11 @@ void main()
 }
 
 )"};
-    using namespace std;
+
+vsg::ref_ptr<vsg::ShaderSet> makeLineShader()
+{
+
+
     auto vertexShader = vsg::ShaderStage::create(VK_SHADER_STAGE_VERTEX_BIT, "main", VERT);
     auto fragmentShader = vsg::ShaderStage::create(VK_SHADER_STAGE_FRAGMENT_BIT, "main", FRAG);
     auto shaderSet = vsg::ShaderSet::create(vsg::ShaderStages{vertexShader, fragmentShader});
