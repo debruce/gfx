@@ -58,7 +58,7 @@ public:
     MyBuilder(const vsg::Builder& rhs) = delete;
     MyBuilder& operator=(const vsg::Builder& rhs) = delete;
 
-    vsg::ref_ptr<vsg::Node> createFrustum(const vsg::GeometryInfo& info, const vsg::StateInfo& stateInfo)
+    vsg::ref_ptr<vsg::Node> createFrustum(const vsg::GeometryInfo& info, const vsg::StateInfo& stateInfo, const float& pitch)
     {
         using namespace vsg;
 
@@ -75,17 +75,18 @@ public:
         auto dx = info.dx;
         auto dy = info.dy;
         auto dz = info.dz;
-        auto origin = info.position - dx * 0.5f - dy * 0.5f - dz * 0.5f;
+        auto origin = info.position;
         auto [t_origin, t_scale, t_top] = y_texcoord(stateInfo).value;
 
-        vec3 v000(origin);
-        vec3 v100(origin + dx);
+        vec3 v000(origin - dx - dy);
+        vec3 v010(origin - dx + dy);
+        vec3 v100(origin + dx - dy);
         vec3 v110(origin + dx + dy);
-        vec3 v010(origin + dy);
-        vec3 v001(origin + dz);
-        vec3 v101(origin + dx + dz);
-        vec3 v111(origin + dx + dy + dz);
-        vec3 v011(origin + dy + dz);
+
+        vec3 v001(origin - dx * pitch - dy * pitch + dz);
+        vec3 v011(origin - dx * pitch + dy * pitch + dz);
+        vec3 v101(origin + dx * pitch - dy * pitch + dz);
+        vec3 v111(origin + dx * pitch + dy * pitch + dz);
 
         vec2 t00(0.0f, t_origin);
         vec2 t01(0.0f, t_top);
@@ -97,7 +98,7 @@ public:
         ref_ptr<vec2Array> texcoords;
         ref_ptr<ushortArray> indices;
 
-        if (stateInfo.wireframe)
+        if (stateInfo.wireframe) 
         {
             vec3 n0 = normalize(v000 - v111);
             vec3 n1 = normalize(v100 - v011);
@@ -285,13 +286,16 @@ int main(int argc, char** argv)
     grab_node->addChild(axes);
     scene->addChild(grab_node);
 
-    vsg::GeometryInfo geomInfo;
-    vsg::StateInfo stateInfo;
-
+    // stateInfo.wireframe = true;
     // scene->addChild(loadPlane(options));
     // scene->addChild(loadBoat(options));
     // scene->addChild(generateMyObject());
-    auto frustum = builder->createFrustum(geomInfo, stateInfo);
+    vsg::GeometryInfo geomInfoF;
+    vsg::StateInfo stateInfoF;
+    geomInfoF.dx = vsg::vec3{0.1f, 0.0f, 0.0f};
+    geomInfoF.dy = vsg::vec3{0.0f, 0.15f, 0.0f};
+    geomInfoF.dz = vsg::vec3{0.0f, 0.0f, 10.0f};
+    auto frustum = builder->createFrustum(geomInfoF, stateInfoF, 5.0f);
     scene->addChild(frustum);
 
     // auto text = DynamicText::create("origin", font, options);
@@ -301,6 +305,8 @@ int main(int argc, char** argv)
 
     // scene->addChild(axes);
 
+    vsg::GeometryInfo geomInfo;
+    vsg::StateInfo stateInfo;
     geomInfo.color = vsg::vec4{.2, .2, .2, 1.0};
     stateInfo.two_sided = true;
     scene->addChild(builder->createQuad(geomInfo, stateInfo));
