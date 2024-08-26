@@ -26,6 +26,51 @@ vsg::ref_ptr<vsg::ShaderSet> makeLineShader();
 vsg::ref_ptr<vsg::StateGroup> makeLineGroup(vsg::ref_ptr<vsg::ShaderSet> shaderSet, vsg::vec4 color, float thickness, vsg::ref_ptr<vsg::vec3Array> vertices);
 vsg::ref_ptr<vsg::StateGroup> makeXYGrid(vsg::ref_ptr<vsg::ShaderSet> shaderSet, vsg::ref_ptr<vsg::Font> font, vsg::ref_ptr<vsg::Options> options, vsg::vec4 color, float thickness, size_t mx, float scale, bool annotate);
 
+// class VSG_DECLSPEC MyBuilder : public vsg::Inherit<vsg::Builder, MyBuilder>
+// {
+// protected:
+//     vsg::Builder::GeometryMap _boats;
+// public:
+//     MyBuilder() {}
+//     MyBuilder(const vsg::Builder& rhs) = delete;
+//     MyBuilder& operator=(const vsg::Builder& rhs) = delete;
+
+//     // vsg::ref_ptr<vsg::Node> createBoat(const vsg::GeometryInfo& info, const vsg::StateInfo& stateInfo)
+//     // {
+//     //     return 
+//     // }
+
+// };
+
+vsg::ref_ptr<vsg::Node> loadObject(vsg::ref_ptr<vsg::Options> options, const string& filepath, const vsg::dmat4& rot)
+{
+    auto model = vsg::read_cast<vsg::Node>(filepath, options);
+    auto bounds = vsg::visit<vsg::ComputeBounds>(model).bounds;
+    auto center = (bounds.min + bounds.max) / 2.0;
+    auto sz = (bounds.max - bounds.min);
+    auto s = 2.0 / std::max(std::max(sz[0], sz[1]), sz[2]);
+
+
+    auto m = vsg::MatrixTransform::create();
+    m->matrix = rot * vsg::scale(s, s, s) * vsg::translate(-center[0], -center[1], -center[2]);
+    cout << demangle(m->matrix) << endl;
+    cout << m->matrix << endl;
+    m->addChild(model);
+    return m;
+}
+
+vsg::ref_ptr<vsg::Node> loadPlane(vsg::ref_ptr<vsg::Options> options)
+{
+    return loadObject(options, "../models/plane.obj", vsg::rotate(vsg::radians(180.0), 0.0, 0.0, 1.0));
+}
+
+vsg::ref_ptr<vsg::Node> loadBoat(vsg::ref_ptr<vsg::Options> options)
+{
+    return loadObject(options, "../models/boat.vsgt",
+        vsg::translate(0.0, 0.0, .35)
+        * vsg::rotate(vsg::radians(-90.0), 0.0, 0.0, 1.0)
+        * vsg::rotate(vsg::radians(90.0), -1.0, 0.0, 0.0));
+}
 
 int main(int argc, char** argv)
 {
@@ -77,7 +122,7 @@ int main(int argc, char** argv)
 
     auto lineShader = makeLineShader();
     scene->addChild(makeXYGrid(lineShader, font, options, vsg::vec4{1.0, 1.0, 1.0, 1.0}, 1.5, 10, 1.0, true));
-    scene->addChild(makeXYGrid(lineShader, font, options, vsg::vec4{.5, 0.5, 0.5, 1.0}, 1.0, 100, .1, true));
+    // scene->addChild(makeXYGrid(lineShader, font, options, vsg::vec4{.5, 0.5, 0.5, 1.0}, 1.0, 100, .1, true));
 
     auto axes = makeAxes(builder);
 
@@ -85,10 +130,14 @@ int main(int argc, char** argv)
     grab_node->addChild(axes);
     scene->addChild(grab_node);
 
-    auto text = DynamicText::create("origin", font, options);
-    text->matrix = vsg::scale(.2f, .2f, .2f);
+    // auto model = loadObject(options, "../models/plane.obj", vsg::rotate(vsg::radians(180.0), 0.0, 0.0, 1.0));
+    // auto model = loadObject(options, "../models/boat.vsgt", vsg::translate(0.0, 0.0, .35) * vsg::rotate(vsg::radians(-90.0), 0.0, 0.0, 1.0) * vsg::rotate(vsg::radians(90.0), -1.0, 0.0, 0.0));
+    // auto model = vsg::read_cast<vsg::Node>("../models/plane.obj", options);
+    scene->addChild(loadPlane(options));
+    // auto text = DynamicText::create("origin", font, options);
+    // text->matrix = vsg::scale(.2f, .2f, .2f);
 
-    scene->addChild(text);
+    // scene->addChild(text);
 
     // scene->addChild(axes);
     vsg::GeometryInfo geomInfo;
@@ -147,8 +196,8 @@ int main(int argc, char** argv)
         // grab_node->matrix = vsg::rotate(vsg::radians(45.0f * (float)sin(t)), 0.0f, 1.0f, 0.0f);
 
         // gpConf->assignDescriptor("color", vsg::vec4Array::create({{1.0f, sinf(t) * .5f + .5f, 0.0f, 1.0f}}));
-        text->set(to_string(numFramesCompleted));
-        text->matrix = vsg::rotate(vsg::radians(25.0f * (float)sin(3.0*t)), 0.0f, 0.0f, 1.0f) * vsg::scale(vsg::vec3{.2, .2, .2});
+        // text->set(to_string(numFramesCompleted));
+        // text->matrix = vsg::rotate(vsg::radians(25.0f * (float)sin(3.0*t)), 0.0f, 0.0f, 1.0f) * vsg::scale(vsg::vec3{.2, .2, .2});
 
         // pass any events into EventHandlers assigned to the Viewer
         viewer->handleEvents();
