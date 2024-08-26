@@ -3,7 +3,7 @@
 #include <iomanip>
 #include <sstream>
 
-static std::string VERT2{R"(
+static std::string VERT{R"(
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
@@ -34,7 +34,7 @@ void main()
 
 )"};
 
-static std::string FRAG2{R"(
+static std::string FRAG{R"(
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
@@ -51,13 +51,14 @@ void main()
 
 vsg::ref_ptr<vsg::StateGroup> generateMyObject()
 {
-    auto vertices = vsg::vec3Array::create(50);
-    for (int i = 0; i < 50; i++) {
-        (*vertices)[i] = vsg::vec3(cos(i * 2 * M_PI / 50), 0, sin(i * 2 * M_PI / 50));
+    auto vertices = vsg::vec3Array::create(52);
+    (*vertices)[0] = vsg::vec3(0, 0, 0);
+    for (int i = 0; i <= 50; i++) {
+        (*vertices)[i+1] = vsg::vec3(cos(i * 2 * M_PI / 50), 0, sin(i * 2 * M_PI / 50));
     }
 
-    auto vertexShader = vsg::ShaderStage::create(VK_SHADER_STAGE_VERTEX_BIT, "main", VERT2);
-    auto fragmentShader = vsg::ShaderStage::create(VK_SHADER_STAGE_FRAGMENT_BIT, "main", FRAG2);
+    auto vertexShader = vsg::ShaderStage::create(VK_SHADER_STAGE_VERTEX_BIT, "main", VERT);
+    auto fragmentShader = vsg::ShaderStage::create(VK_SHADER_STAGE_FRAGMENT_BIT, "main", FRAG);
     auto shaderSet = vsg::ShaderSet::create(vsg::ShaderStages{vertexShader, fragmentShader});
 
     shaderSet->addPushConstantRange("pc", "", VK_SHADER_STAGE_VERTEX_BIT, 0, 128);
@@ -83,7 +84,7 @@ vsg::ref_ptr<vsg::StateGroup> generateMyObject()
         {
             ias.topology = topo;
         }
-    } sps(VK_PRIMITIVE_TOPOLOGY_POINT_LIST);
+    } sps(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN);
 
     gpConf->accept(sps);
     gpConf->init();

@@ -20,6 +20,29 @@ ostream& operator<<(ostream& os, const vsg::GeometryInfo& gi)
 
 vsg::ref_ptr<vsg::Group> makeAxes(vsg::ref_ptr<vsg::Builder> builder);
 
+vsg::ref_ptr<vsg::MatrixTransform> makeFrustum(vsg::ref_ptr<vsg::Builder> builder)
+{
+    vsg::GeometryInfo geomInfo;
+    vsg::StateInfo stateInfo;
+
+    stateInfo.wireframe = true;
+    geomInfo.dx = {.35f, 0.0f, 0.0f};
+    geomInfo.dy = {0.0f, .25f, 0.0f};
+    geomInfo.dz = {0.0f, 0.0f, 1.0f};
+    geomInfo.position = { 0.0f, 0.0f, 0.5f };
+    geomInfo.color = vsg::vec4{1.0, .5, .25, 1.0};
+    geomInfo.transform = vsg::mat4{
+        { 1.0f, 0.0f, 0.0f, 0.0f },
+        { 0.0f, 1.0f, 0.0f, 0.0f },
+        { 0.0f, 0.0f, 1.0f, 0.0f },
+        { 0.25f, 0.25f, 0.0f, 1.0f },                
+    };
+    auto box = builder->createBox(geomInfo, stateInfo);
+    auto obox = vsg::MatrixTransform::create();
+    obox->addChild(box);
+    return obox;
+}
+
 vsg::ref_ptr<vsg::Group> lightupScene(vsg::ref_ptr<vsg::Group> scene, const float& ambientIntensity, const float& directionalIntensity, const vsg::vec3& direction);
 
 vsg::ref_ptr<vsg::ShaderSet> makeLineShader();
@@ -35,10 +58,10 @@ vsg::ref_ptr<vsg::StateGroup> makeXYGrid(vsg::ref_ptr<vsg::ShaderSet> shaderSet,
 //     MyBuilder(const vsg::Builder& rhs) = delete;
 //     MyBuilder& operator=(const vsg::Builder& rhs) = delete;
 
-//     // vsg::ref_ptr<vsg::Node> createBoat(const vsg::GeometryInfo& info, const vsg::StateInfo& stateInfo)
-//     // {
-//     //     return 
-//     // }
+//     vsg::ref_ptr<vsg::Node> createBoat(const vsg::GeometryInfo& info, const vsg::StateInfo& stateInfo)
+//     {
+//         return 
+//     }
 
 // };
 
@@ -72,7 +95,7 @@ vsg::ref_ptr<vsg::Node> loadBoat(vsg::ref_ptr<vsg::Options> options)
         * vsg::rotate(vsg::radians(90.0), -1.0, 0.0, 0.0));
 }
 
-vsg::ref_ptr<vsg::StateGroup> generateMyObject();
+// vsg::ref_ptr<vsg::StateGroup> generateMyObject();
 
 int main(int argc, char** argv)
 {
@@ -133,7 +156,11 @@ int main(int argc, char** argv)
     scene->addChild(grab_node);
 
     // scene->addChild(loadPlane(options));
-    scene->addChild(generateMyObject());
+    scene->addChild(loadBoat(options));
+    // scene->addChild(generateMyObject());
+    // auto frustum = makeFrustum(builder);
+    // scene->addChild(frustum);
+
     // auto text = DynamicText::create("origin", font, options);
     // text->matrix = vsg::scale(.2f, .2f, .2f);
 
