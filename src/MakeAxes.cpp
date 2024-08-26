@@ -38,3 +38,18 @@ vsg::ref_ptr<vsg::Group> makeAxes(vsg::ref_ptr<vsg::Builder> builder)
     axes->addChild(yStovePipe);
     return axes;
 }
+
+vsg::ref_ptr<vsg::Node> loadObject(vsg::ref_ptr<vsg::Options> options, const std::string& filepath, const vsg::dmat4& rot)
+{
+    auto model = vsg::read_cast<vsg::Node>(filepath, options);
+    auto bounds = vsg::visit<vsg::ComputeBounds>(model).bounds;
+    auto center = (bounds.min + bounds.max) / 2.0;
+    auto sz = (bounds.max - bounds.min);
+    auto s = 2.0 / std::max(std::max(sz[0], sz[1]), sz[2]);
+
+
+    auto m = vsg::MatrixTransform::create();
+    m->matrix = rot * vsg::scale(s, s, s) * vsg::translate(-center[0], -center[1], -center[2]);
+    m->addChild(model);
+    return m;
+}

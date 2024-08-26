@@ -4,6 +4,7 @@
 
 #include "Demangle.h"
 #include "DynamicText.h"
+#include "MyBuilder.h"
 
 #include <iostream>
 #include <sstream>
@@ -11,207 +12,20 @@
 
 using namespace std;
 
-ostream& operator<<(ostream& os, const vsg::GeometryInfo& gi)
-{
-    stringstream ss;
-    ss << "[ position=" << gi.position << " transform=" << gi.transform << " color=" << gi.color << " ]";
-    return os << ss.str();
-}
+// ostream& operator<<(ostream& os, const vsg::GeometryInfo& gi)
+// {
+//     stringstream ss;
+//     ss << "[ position=" << gi.position << " transform=" << gi.transform << " color=" << gi.color << " ]";
+//     return os << ss.str();
+// }
 
 vsg::ref_ptr<vsg::Group> makeAxes(vsg::ref_ptr<vsg::Builder> builder);
-
-vsg::ref_ptr<vsg::MatrixTransform> makeFrustum(vsg::ref_ptr<vsg::Builder> builder)
-{
-    vsg::GeometryInfo geomInfo;
-    vsg::StateInfo stateInfo;
-
-    stateInfo.wireframe = true;
-    geomInfo.dx = {.35f, 0.0f, 0.0f};
-    geomInfo.dy = {0.0f, .25f, 0.0f};
-    geomInfo.dz = {0.0f, 0.0f, 1.0f};
-    geomInfo.position = { 0.0f, 0.0f, 0.5f };
-    geomInfo.color = vsg::vec4{1.0, .5, .25, 1.0};
-    geomInfo.transform = vsg::mat4{
-        { 1.0f, 0.0f, 0.0f, 0.0f },
-        { 0.0f, 1.0f, 0.0f, 0.0f },
-        { 0.0f, 0.0f, 1.0f, 0.0f },
-        { 0.25f, 0.25f, 0.0f, 1.0f },                
-    };
-    auto box = builder->createBox(geomInfo, stateInfo);
-    auto obox = vsg::MatrixTransform::create();
-    obox->addChild(box);
-    return obox;
-}
-
+vsg::ref_ptr<vsg::Node> loadObject(vsg::ref_ptr<vsg::Options> options, const string& filepath, const vsg::dmat4& rot);
 vsg::ref_ptr<vsg::Group> lightupScene(vsg::ref_ptr<vsg::Group> scene, const float& ambientIntensity, const float& directionalIntensity, const vsg::vec3& direction);
 
 vsg::ref_ptr<vsg::ShaderSet> makeLineShader();
 vsg::ref_ptr<vsg::StateGroup> makeLineGroup(vsg::ref_ptr<vsg::ShaderSet> shaderSet, vsg::vec4 color, float thickness, vsg::ref_ptr<vsg::vec3Array> vertices);
 vsg::ref_ptr<vsg::StateGroup> makeXYGrid(vsg::ref_ptr<vsg::ShaderSet> shaderSet, vsg::ref_ptr<vsg::Font> font, vsg::ref_ptr<vsg::Options> options, vsg::vec4 color, float thickness, size_t mx, float scale, bool annotate);
-
-class VSG_DECLSPEC MyBuilder : public vsg::Inherit<vsg::Builder, MyBuilder>
-{
-protected:
-    vsg::Builder::GeometryMap _frustums;
-public:
-    MyBuilder() {}
-    MyBuilder(const vsg::Builder& rhs) = delete;
-    MyBuilder& operator=(const vsg::Builder& rhs) = delete;
-
-    vsg::ref_ptr<vsg::Node> createFrustum(const vsg::GeometryInfo& info, const vsg::StateInfo& stateInfo, const float& pitch)
-    {
-        using namespace vsg;
-
-        auto& subgraph = _frustums[std::make_pair(info, stateInfo)];
-        if (subgraph)
-        {
-            return subgraph;
-        }
-
-        uint32_t instanceCount = 1;
-        auto positions = instancePositions(info, instanceCount);
-        auto colors = instanceColors(info, instanceCount);
-
-        auto dx = info.dx;
-        auto dy = info.dy;
-        auto dz = info.dz;
-        auto origin = info.position;
-        auto [t_origin, t_scale, t_top] = y_texcoord(stateInfo).value;
-
-        vec3 v000(origin - dx - dy);
-        vec3 v010(origin - dx + dy);
-        vec3 v100(origin + dx - dy);
-        vec3 v110(origin + dx + dy);
-
-        vec3 v001(origin - dx * pitch - dy * pitch + dz);
-        vec3 v011(origin - dx * pitch + dy * pitch + dz);
-        vec3 v101(origin + dx * pitch - dy * pitch + dz);
-        vec3 v111(origin + dx * pitch + dy * pitch + dz);
-
-        vec2 t00(0.0f, t_origin);
-        vec2 t01(0.0f, t_top);
-        vec2 t10(1.0f, t_origin);
-        vec2 t11(1.0f, t_top);
-
-        ref_ptr<vec3Array> vertices;
-        ref_ptr<vec3Array> normals;
-        ref_ptr<vec2Array> texcoords;
-        ref_ptr<ushortArray> indices;
-
-        if (stateInfo.wireframe) 
-        {
-            vec3 n0 = normalize(v000 - v111);
-            vec3 n1 = normalize(v100 - v011);
-            vec3 n2 = normalize(v110 - v001);
-            vec3 n3 = normalize(v010 - v101);
-            vec3 n4 = -n2;
-            vec3 n5 = -n3;
-            vec3 n6 = -n0;
-            vec3 n7 = -n1;
-
-            // set up vertex and index arrays
-            vertices = vec3Array::create(
-                {v000, v100, v110, v010,
-                v001, v101, v111, v011});
-
-            normals = vec3Array::create(
-                {n0, n1, n2, n3,
-                n4, n5, n6, n7});
-
-            texcoords = vec2Array::create(
-                {t00, t10, t11, t01,
-                t00, t10, t11, t01});
-
-            indices = ushortArray::create(
-                {0, 1, 1, 2, 2, 3, 3, 0,
-                0, 4, 1, 5, 2, 6, 3, 7,
-                4, 5, 5, 6, 6, 7, 7, 4});
-        }
-        else
-        {
-            vec3 n0 = normalize(cross(dx, dz));
-            vec3 n1 = normalize(cross(dy, dz));
-            vec3 n2 = -n0;
-            vec3 n3 = -n1;
-            vec3 n4 = normalize(cross(dy, dx));
-            vec3 n5 = -n4;
-
-            // set up vertex and index arrays
-            vertices = vec3Array::create(
-                {v000, v100, v101, v001,   // front
-                v100, v110, v111, v101,   // right
-                v110, v010, v011, v111,   // far
-                v010, v000, v001, v011,   // left
-                v010, v110, v100, v000,   // bottom
-                v001, v101, v111, v011}); // top
-
-            normals = vec3Array::create(
-                {n0, n0, n0, n0,
-                n1, n1, n1, n1,
-                n2, n2, n2, n2,
-                n3, n3, n3, n3,
-                n4, n4, n4, n4,
-                n5, n5, n5, n5});
-
-            texcoords = vec2Array::create(
-                {t00, t10, t11, t01,
-                t00, t10, t11, t01,
-                t00, t10, t11, t01,
-                t00, t10, t11, t01,
-                t00, t10, t11, t01,
-                t00, t10, t11, t01});
-
-            indices = ushortArray::create(
-                {0, 1, 2, 0, 2, 3,
-                4, 5, 6, 4, 6, 7,
-                8, 9, 10, 8, 10, 11,
-                12, 13, 14, 12, 14, 15,
-                16, 17, 18, 16, 18, 19,
-                20, 21, 22, 20, 22, 23});
-        }
-
-        if (info.transform != identity)
-        {
-            transform(info.transform, vertices, normals);
-        }
-
-        // setup geometry
-        auto vid = VertexIndexDraw::create();
-
-        DataList arrays;
-        arrays.push_back(vertices);
-        if (normals) arrays.push_back(normals);
-        if (texcoords) arrays.push_back(texcoords);
-        if (colors) arrays.push_back(colors);
-        if (positions) arrays.push_back(positions);
-        vid->assignArrays(arrays);
-
-        vid->assignIndices(indices);
-        vid->indexCount = static_cast<uint32_t>(indices->size());
-        vid->instanceCount = instanceCount;
-
-        subgraph = decorateAndCompileIfRequired(info, stateInfo, vid);
-        return subgraph;
-    }
-
-};
-
-vsg::ref_ptr<vsg::Node> loadObject(vsg::ref_ptr<vsg::Options> options, const string& filepath, const vsg::dmat4& rot)
-{
-    auto model = vsg::read_cast<vsg::Node>(filepath, options);
-    auto bounds = vsg::visit<vsg::ComputeBounds>(model).bounds;
-    auto center = (bounds.min + bounds.max) / 2.0;
-    auto sz = (bounds.max - bounds.min);
-    auto s = 2.0 / std::max(std::max(sz[0], sz[1]), sz[2]);
-
-
-    auto m = vsg::MatrixTransform::create();
-    m->matrix = rot * vsg::scale(s, s, s) * vsg::translate(-center[0], -center[1], -center[2]);
-    cout << demangle(m->matrix) << endl;
-    cout << m->matrix << endl;
-    m->addChild(model);
-    return m;
-}
 
 vsg::ref_ptr<vsg::Node> loadPlane(vsg::ref_ptr<vsg::Options> options)
 {
