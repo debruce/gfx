@@ -72,6 +72,8 @@ vsg::ref_ptr<vsg::Node> loadBoat(vsg::ref_ptr<vsg::Options> options)
         * vsg::rotate(vsg::radians(90.0), -1.0, 0.0, 0.0));
 }
 
+vsg::ref_ptr<vsg::StateGroup> generateMyObject();
+
 int main(int argc, char** argv)
 {
     auto options = vsg::Options::create();
@@ -130,10 +132,8 @@ int main(int argc, char** argv)
     grab_node->addChild(axes);
     scene->addChild(grab_node);
 
-    // auto model = loadObject(options, "../models/plane.obj", vsg::rotate(vsg::radians(180.0), 0.0, 0.0, 1.0));
-    // auto model = loadObject(options, "../models/boat.vsgt", vsg::translate(0.0, 0.0, .35) * vsg::rotate(vsg::radians(-90.0), 0.0, 0.0, 1.0) * vsg::rotate(vsg::radians(90.0), -1.0, 0.0, 0.0));
-    // auto model = vsg::read_cast<vsg::Node>("../models/plane.obj", options);
-    scene->addChild(loadPlane(options));
+    // scene->addChild(loadPlane(options));
+    scene->addChild(generateMyObject());
     // auto text = DynamicText::create("origin", font, options);
     // text->matrix = vsg::scale(.2f, .2f, .2f);
 
@@ -147,7 +147,7 @@ int main(int argc, char** argv)
     scene->addChild(builder->createQuad(geomInfo, stateInfo));
 
     // compute the bounds of the scene graph to help position camera
-    auto bounds = vsg::visit<vsg::ComputeBounds>(scene).bounds;
+    // auto bounds = vsg::visit<vsg::ComputeBounds>(scene).bounds;
 
     scene = lightupScene(scene, .3f, .85f, vsg::vec3{0.0f, -1.0f, -1.0f});
 
@@ -158,8 +158,12 @@ int main(int argc, char** argv)
 
     vsg::ref_ptr<vsg::LookAt> lookAt;
 
-    vsg::dvec3 centre = (bounds.min + bounds.max) * 0.5;
-    double radius = vsg::length(bounds.max - bounds.min) * 0.6;
+    // vsg::dvec3 centre = (bounds.min + bounds.max) * 0.5;
+    // double radius = vsg::length(bounds.max - bounds.min) * 0.6;
+    // cout << "center = " << centre << endl;
+    // cout << "radius = " << radius << endl;
+    vsg::dvec3 centre{0.0, 0.0, 0.0};
+    double radius = 18.0;
 
     // set up the camera
     lookAt = vsg::LookAt::create(centre + vsg::dvec3(0.0, -radius * 3.5, 0.0), centre, vsg::dvec3(0.0, 0.0, 1.0));
