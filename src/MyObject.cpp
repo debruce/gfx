@@ -84,7 +84,7 @@ vsg::ref_ptr<vsg::StateGroup> generateMyObject()
         {
             ias.topology = topo;
         }
-    } sps(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN);
+    } sps(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 
     gpConf->accept(sps);
     gpConf->init();

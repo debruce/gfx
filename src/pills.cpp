@@ -40,7 +40,53 @@ vsg::ref_ptr<vsg::Node> loadBoat(vsg::ref_ptr<vsg::Options> options)
         * vsg::rotate(vsg::radians(90.0), -1.0, 0.0, 0.0));
 }
 
-// vsg::ref_ptr<vsg::StateGroup> generateMyObject();
+vsg::ref_ptr<vsg::StateGroup> generateMyObject();
+
+vsg::ref_ptr<vsg::Node> generateFlatOcean(vsg::ref_ptr<vsg::Builder> builder)
+{
+    vsg::GeometryInfo geomInfo;
+    geomInfo.dx = vsg::vec3(20.0, 0.0, 0.0);
+    geomInfo.dy = vsg::vec3(0.0, 20.0, 0.0);
+    geomInfo.dz = vsg::vec3(0.0, 0.0, 0.0);
+    geomInfo.color = vsg::vec4{.15, .15, .15, 1.0};
+    vsg::StateInfo stateInfo;
+    stateInfo.two_sided = true;
+    return builder->createQuad(geomInfo, stateInfo);
+}
+
+vsg::ref_ptr<vsg::Node> generateBumpyOcean(vsg::ref_ptr<vsg::Builder> builder)
+{
+    size_t sz = 256;
+    auto textureData = vsg::floatArray2D::create(sz, sz);\
+    float off = 127.5;
+    for (int i = 0; i < textureData->height(); i++) {
+        for (int j = 0; j < textureData->width(); j++) {
+            float x = (i - off) / 32.0;
+            float y = (j - off) / 32.0;
+            textureData->at(i,j) = exp(-(x*x + y*y));
+        }
+    }
+    textureData->properties.format = VK_FORMAT_R32_SFLOAT;
+    textureData->properties.dataVariance = vsg::STATIC_DATA;
+
+    // auto textureData = vsg::vec3Array2D::create(256, 256);
+    // for (size_t i = 0; i < textureData->height(); i++) {
+    //     for (size_t j = 0; j < textureData->width(); j++) {
+    //         textureData->at(i,j) = vsg::vec3(height(i, j), .5, .25);
+    //     }
+    // }
+    // textureData->properties.format = VK_FORMAT_R32G32B32_SFLOAT;;
+    // textureData->properties.dataVariance = vsg::STATIC_DATA;
+
+    vsg::GeometryInfo geomInfo;
+    geomInfo.dx = vsg::vec3(20.0, 0.0, 0.0);
+    geomInfo.dy = vsg::vec3(0.0, 20.0, 0.0);
+    geomInfo.dz = vsg::vec3(0.0, 0.0, 1.0);
+    vsg::StateInfo stateInfo;
+    stateInfo.displacementMap = textureData;
+
+    return builder->createHeightField(geomInfo, stateInfo);
+}
 
 int main(int argc, char** argv)
 {
@@ -103,27 +149,11 @@ int main(int argc, char** argv)
     // stateInfo.wireframe = true;
     // scene->addChild(loadPlane(options));
     // scene->addChild(loadBoat(options));
-    // scene->addChild(generateMyObject());
-    vsg::GeometryInfo geomInfoF;
-    vsg::StateInfo stateInfoF;
-    geomInfoF.dx = vsg::vec3{0.1f, 0.0f, 0.0f};
-    geomInfoF.dy = vsg::vec3{0.0f, 0.15f, 0.0f};
-    geomInfoF.dz = vsg::vec3{0.0f, 0.0f, 10.0f};
-    auto frustum = builder->createFrustum(geomInfoF, stateInfoF, 5.0f);
-    scene->addChild(frustum);
 
-    // auto text = DynamicText::create("origin", font, options);
-    // text->matrix = vsg::scale(.2f, .2f, .2f);
+    scene->addChild(generateMyObject());
 
-    // scene->addChild(text);
-
-    // scene->addChild(axes);
-
-    vsg::GeometryInfo geomInfo;
-    vsg::StateInfo stateInfo;
-    geomInfo.color = vsg::vec4{.2, .2, .2, 1.0};
-    stateInfo.two_sided = true;
-    scene->addChild(builder->createQuad(geomInfo, stateInfo));
+    // scene->addChild(generateFlatOcean(builder));
+    scene->addChild(generateBumpyOcean(builder));
 
     // compute the bounds of the scene graph to help position camera
     // auto bounds = vsg::visit<vsg::ComputeBounds>(scene).bounds;
