@@ -51,16 +51,16 @@ vsg::ref_ptr<vsg::StateGroup> generateMyObject(vsg::ref_ptr<vsg::Options> option
     const size_t square_count = 10;
     const size_t triangle_count = square_count * 2;
 
-    auto vertices_ptr = vsg::vec3Array::create(3 * triangle_count);
+    auto vertices_ptr = vsg::vec3Array2D::create(3, triangle_count);
     auto& vertices = *vertices_ptr;
 
-    auto normals_ptr = vsg::vec3Array::create(3 * triangle_count);
+    auto normals_ptr = vsg::vec3Array2D::create(3, triangle_count);
     auto& normals = *normals_ptr;
 
-    auto texCoord_ptr = vsg::vec2Array::create(3 * triangle_count);
+    auto texCoord_ptr = vsg::vec2Array2D::create(3, triangle_count);
     auto& texCoord = *texCoord_ptr;
 
-    auto colors_ptr = vsg::vec4Array::create(3 * triangle_count);
+    auto colors_ptr = vsg::vec4Array2D::create(3, triangle_count);
     auto& colors = *colors_ptr;
 
     auto angle_step = 2 * M_PI / square_count;
@@ -77,23 +77,23 @@ vsg::ref_ptr<vsg::StateGroup> generateMyObject(vsg::ref_ptr<vsg::Options> option
         float x1 = cos(angle + angle_step) * 5.0;
         float y1 = sin(angle + angle_step) * 5.0;
 
-        vertices[v_index] = vsg::vec3{x0, y0, z0};
-        vertices[v_index+1] = vsg::vec3{x0, y0, z1};
-        vertices[v_index+2] = vsg::vec3{x1, y1, z0};
+        vertices(0,v_index) = vsg::vec3{x0, y0, z0};
+        vertices(1,v_index) = vsg::vec3{x0, y0, z1};
+        vertices(2,v_index) = vsg::vec3{x1, y1, z0};
 
-        auto norm = calcNorm(vertices[v_index], vertices[v_index+1], vertices[v_index+2]);
-        normals[v_index] = norm;
-        normals[v_index+1] = norm;
-        normals[v_index+2] = norm;
+        auto norm = calcNorm(vertices(0,v_index), vertices(1,v_index), vertices(2,v_index));
+        normals(0,v_index) = norm;
+        normals(1,v_index) = norm;
+        normals(2,v_index) = norm;
 
-        texCoord[v_index] = vsg::vec2{float(i)/triangle_count, 0.0};
-        texCoord[v_index+1] = vsg::vec2{float(i)/triangle_count, 1.0};
-        texCoord[v_index+2] = vsg::vec2{float(i+1)/triangle_count, 0.0};
+        texCoord(0,v_index) = vsg::vec2{float(i)/triangle_count, 0.0};
+        texCoord(1,v_index) = vsg::vec2{float(i)/triangle_count, 1.0};
+        texCoord(2,v_index) = vsg::vec2{float(i+1)/triangle_count, 0.0};
 
-        colors[v_index] = clr;
-        colors[v_index+1] = clr;
-        colors[v_index+2] = clr;
-        v_index += 3;
+        colors(0,v_index) = clr;
+        colors(1,v_index) = clr;
+        colors(2,v_index) = clr;
+        v_index++;
     }
 
     for (size_t i = 0; i < square_count; i++) {
@@ -105,23 +105,23 @@ vsg::ref_ptr<vsg::StateGroup> generateMyObject(vsg::ref_ptr<vsg::Options> option
         float x1 = cos(angle + angle_step) * 5.0;
         float y1 = sin(angle + angle_step) * 5.0;
 
-        vertices[v_index] = vsg::vec3{x0, y0, z1};
-        vertices[v_index+1] = vsg::vec3{x1, y1, z0};
-        vertices[v_index+2] = vsg::vec3{x1, y1, z1};
+        vertices(0,v_index) = vsg::vec3{x0, y0, z1};
+        vertices(1,v_index) = vsg::vec3{x1, y1, z0};
+        vertices(2,v_index) = vsg::vec3{x1, y1, z1};
 
-        auto norm = calcNorm(vertices[v_index], vertices[v_index+1], vertices[v_index+2]);
-        normals[v_index] = norm;
-        normals[v_index+1] = norm;
-        normals[v_index+2] = norm;
+        auto norm = calcNorm(vertices(0,v_index), vertices(1,v_index), vertices(2,v_index));
+        normals(0,v_index) = norm;
+        normals(1,v_index) = norm;
+        normals(2, v_index) = norm;
 
-        texCoord[v_index] = vsg::vec2{float(i)/triangle_count, 0.0};
-        texCoord[v_index+1] = vsg::vec2{float(i)/triangle_count, 1.0};
-        texCoord[v_index+2] = vsg::vec2{float(i+1)/triangle_count, 0.0};
+        texCoord(0, v_index) = vsg::vec2{float(i)/triangle_count, 0.0};
+        texCoord(1, v_index) = vsg::vec2{float(i)/triangle_count, 1.0};
+        texCoord(2, v_index) = vsg::vec2{float(i+1)/triangle_count, 0.0};
 
-        colors[v_index] = clr;
-        colors[v_index+1] = clr;
-        colors[v_index+2] = clr;
-        v_index += 3;
+        colors(0, v_index)= clr;
+        colors(1, v_index) = clr;
+        colors(2, v_index) = clr;
+        v_index++;
     }
 
     vsg::DataList vertexArrays;
@@ -131,8 +131,8 @@ vsg::ref_ptr<vsg::StateGroup> generateMyObject(vsg::ref_ptr<vsg::Options> option
     gpConf->assignArray(vertexArrays, "vsg_Color", VK_VERTEX_INPUT_RATE_VERTEX, colors_ptr);
     auto vertexDraw = vsg::VertexDraw::create();
     vertexDraw->assignArrays(vertexArrays);
-    vertexDraw->vertexCount = vertices_ptr->width();
-    cout << "width = " << vertices_ptr->width() << endl;
+    vertexDraw->vertexCount = vertices.valueCount();
+    cout << "width = " << vertices.valueCount() << endl;
     vertexDraw->instanceCount = 1;
 
     auto geomGroup = vsg::StateGroup::create();
