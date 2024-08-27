@@ -18,6 +18,6 @@ layout(location = 0) out vec4 color;
 
 void main()
 {
-    // color = vertexColor;
-    color = vec4(texCoord0.x, 1.0, texCoord0.y, 1.0);
+    color = vertexColor;
+    // color = vec4(texCoord0.x, .25, texCoord0.y, 1.0);
 }

@@ -48,7 +48,8 @@ vsg::ref_ptr<vsg::StateGroup> generateMyObject(vsg::ref_ptr<vsg::Options> option
     gpConf->accept(sps);
     gpConf->init();
 
-    const size_t triangle_count = 2;
+    const size_t square_count = 10;
+    const size_t triangle_count = square_count * 2;
 
     auto vertices_ptr = vsg::vec3Array::create(3 * triangle_count);
     auto& vertices = *vertices_ptr;
@@ -62,89 +63,66 @@ vsg::ref_ptr<vsg::StateGroup> generateMyObject(vsg::ref_ptr<vsg::Options> option
     auto colors_ptr = vsg::vec4Array::create(3 * triangle_count);
     auto& colors = *colors_ptr;
 
-    vertices[0] = vsg::vec3{0.0, 0.0, 0.0};
-    vertices[1] = vsg::vec3{0.0, 0.0, 1.0};
-    vertices[2] = vsg::vec3{1.0, 1.0, 0.0};
+    auto angle_step = 2 * M_PI / square_count;
+    float z0 = 0.0;
+    float z1 = 1.5;
+    size_t v_index = 0;
 
-    auto norm = calcNorm(vertices[0], vertices[1], vertices[2]);
-    normals[0] = norm;
-    normals[1] = norm;
-    normals[2] = norm;
+    for (size_t i = 0; i < square_count; i++) {
+        float percent = float(i) / square_count;
+        auto clr = vsg::vec4{percent, 0.0, 1-percent, 1.0};
+        float angle = 2 * M_PI * percent;
+        float x0 = cos(angle) * 5.0;
+        float y0 = sin(angle) * 5.0;
+        float x1 = cos(angle + angle_step) * 5.0;
+        float y1 = sin(angle + angle_step) * 5.0;
 
-    texCoord[0] = vsg::vec2{0.0, 0.0};
-    texCoord[1] = vsg::vec2{0.0, 1.0};
-    texCoord[2] = vsg::vec2{1.0, 0.0};
+        vertices[v_index] = vsg::vec3{x0, y0, z0};
+        vertices[v_index+1] = vsg::vec3{x0, y0, z1};
+        vertices[v_index+2] = vsg::vec3{x1, y1, z0};
 
-    colors[0] = vsg::vec4{1.0, 1.0, 1.0, 1.0};
-    colors[1] = vsg::vec4{1.0, 1.0, 1.0, 1.0};
-    colors[2] = vsg::vec4{1.0, 1.0, 1.0, 1.0};
+        auto norm = calcNorm(vertices[v_index], vertices[v_index+1], vertices[v_index+2]);
+        normals[v_index] = norm;
+        normals[v_index+1] = norm;
+        normals[v_index+2] = norm;
 
-    vertices[3] = vsg::vec3{0.0, 0.0, 1.0};
-    vertices[4] = vsg::vec3{1.0, 1.0, 0.0};
-    vertices[5] = vsg::vec3{1.0, 1.0, 1.0};
+        texCoord[v_index] = vsg::vec2{float(i)/triangle_count, 0.0};
+        texCoord[v_index+1] = vsg::vec2{float(i)/triangle_count, 1.0};
+        texCoord[v_index+2] = vsg::vec2{float(i+1)/triangle_count, 0.0};
 
-    norm = calcNorm(vertices[3], vertices[4], vertices[5]);
-    normals[3] = norm;
-    normals[4] = norm;
-    normals[5] = norm;
+        colors[v_index] = clr;
+        colors[v_index+1] = clr;
+        colors[v_index+2] = clr;
+        v_index += 3;
+    }
 
-    texCoord[3] = vsg::vec2{0.0, 1.0};
-    texCoord[4] = vsg::vec2{1.0, 0.0};
-    texCoord[5] = vsg::vec2{1.0, 1.0};
+    for (size_t i = 0; i < square_count; i++) {
+        float percent = float(i) / square_count;
+        auto clr = vsg::vec4{percent, 0.0, 1-percent, 1.0};
+        float angle = 2 * M_PI * percent;
+        float x0 = cos(angle) * 5.0;
+        float y0 = sin(angle) * 5.0;
+        float x1 = cos(angle + angle_step) * 5.0;
+        float y1 = sin(angle + angle_step) * 5.0;
 
-    colors[3] = vsg::vec4{1.0, 1.0, 1.0, 1.0};
-    colors[4] = vsg::vec4{1.0, 1.0, 1.0, 1.0};
-    colors[5] = vsg::vec4{1.0, 1.0, 1.0, 1.0};
+        vertices[v_index] = vsg::vec3{x0, y0, z1};
+        vertices[v_index+1] = vsg::vec3{x1, y1, z0};
+        vertices[v_index+2] = vsg::vec3{x1, y1, z1};
 
+        auto norm = calcNorm(vertices[v_index], vertices[v_index+1], vertices[v_index+2]);
+        normals[v_index] = norm;
+        normals[v_index+1] = norm;
+        normals[v_index+2] = norm;
 
-    // auto angle_step = M_PI / triangle_count;
-    // float z0 = 0.0;
-    // float z1 = 1.5;
-    // // auto clr = vsg::vec4{1.0, 1.0, 1.0, 1.0};
-    // for (size_t i = 0; i < triangle_count; i += 2) {
-    //     float percent = float(i) / triangle_count;
-    //     auto clr = vsg::vec4{percent, 0.0, 1-percent, 1.0};
-    //     float angle = i * M_PI / triangle_count;
-    //     float x0 = cos(angle) * 10.0;
-    //     float y0 = sin(angle) + 10.0;
-    //     float x1 = cos(angle + angle_step) * 10.0;
-    //     float y1 = sin(angle + angle_step) + 10.0;
+        texCoord[v_index] = vsg::vec2{float(i)/triangle_count, 0.0};
+        texCoord[v_index+1] = vsg::vec2{float(i)/triangle_count, 1.0};
+        texCoord[v_index+2] = vsg::vec2{float(i+1)/triangle_count, 0.0};
 
-    //     vertices[i*3] = vsg::vec3{x0, y0, z0};
-    //     vertices[i*3+1] = vsg::vec3{x0, y0, z1};
-    //     vertices[i*3+2] = vsg::vec3{x1, y1, z0};
-
-    //     auto norm = vsg::normalize(vsg::cross(vertices[i*3+1] - vertices[i*3], vertices[i*3+2] - vertices[i*3]));
-    //     normals[i*3] = norm;
-    //     normals[i*3+1] = norm;
-    //     normals[i*3+2] = norm;
-
-    //     texCoord[i*3] = vsg::vec2{float(i)/triangle_count, 0.0};
-    //     texCoord[i*3+1] = vsg::vec2{float(i)/triangle_count, 1.0};
-    //     texCoord[i*3+2] = vsg::vec2{float(i+1)/triangle_count, 0.0};
-
-    //     colors[i*3] = clr;
-    //     colors[i*3+1] = clr;
-    //     colors[i*3+2] = clr;
-
-    //     vertices[(i+1)*3] = vsg::vec3{x0, y0, z0};
-    //     vertices[(i+1)*3+1] = vsg::vec3{x0, y0, z1};
-    //     vertices[(i+1)*3+2] = vsg::vec3{x1, y1, z0};
-
-    //     norm = vsg::normalize(vsg::cross(vertices[(i+1)*3+1] - vertices[(i+1)*3], vertices[(i+1)*3+2] - vertices[(i+1)*3]));
-    //     normals[(i+1)*3] = norm;
-    //     normals[(i+1)*3+1] = norm;
-    //     normals[(i+1)*3+2] = norm;
-
-    //     texCoord[i*3] = vsg::vec2{float(i)/triangle_count, 0.0};
-    //     texCoord[i*3+1] = vsg::vec2{float(i)/triangle_count, 1.0};
-    //     texCoord[i*3+2] = vsg::vec2{float(i+1)/triangle_count, 0.0};
-
-    //     colors[(i+1)*3] = clr;
-    //     colors[(i+1)*3+1] = clr;
-    //     colors[(i+1)*3+2] = clr;
-    // }
-
+        colors[v_index] = clr;
+        colors[v_index+1] = clr;
+        colors[v_index+2] = clr;
+        v_index += 3;
+    }
 
     vsg::DataList vertexArrays;
     gpConf->assignArray(vertexArrays, "vsg_Vertex", VK_VERTEX_INPUT_RATE_VERTEX, vertices_ptr);

@@ -136,8 +136,8 @@ int main(int argc, char** argv)
 
     auto scene = vsg::Group::create();
 
-    // auto lineShader = makeLineShader();
-    // scene->addChild(makeXYGrid(lineShader, font, options, vsg::vec4{1.0, 1.0, 1.0, 1.0}, 1.5, 10, 1.0, true));
+    auto lineShader = makeLineShader();
+    scene->addChild(makeXYGrid(lineShader, font, options, vsg::vec4{1.0, 1.0, 1.0, 1.0}, 1.5, 10, 1.0, true));
     // scene->addChild(makeXYGrid(lineShader, font, options, vsg::vec4{.5, 0.5, 0.5, 1.0}, 1.0, 100, .1, true));
 
     auto axes = makeAxes(builder);
@@ -150,6 +150,9 @@ int main(int argc, char** argv)
     // scene->addChild(loadPlane(options));
     // scene->addChild(loadBoat(options));
 
+    vsg::GeometryInfo geomInfo;
+    vsg::StateInfo stateInfo;
+    scene->addChild(builder->createSphere(geomInfo, stateInfo));
     scene->addChild(generateMyObject(options));
 
     // scene->addChild(generateFlatOcean(builder));
