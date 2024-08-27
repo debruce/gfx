@@ -40,7 +40,7 @@ vsg::ref_ptr<vsg::Node> loadBoat(vsg::ref_ptr<vsg::Options> options)
         * vsg::rotate(vsg::radians(90.0), -1.0, 0.0, 0.0));
 }
 
-vsg::ref_ptr<vsg::StateGroup> generateMyObject();
+vsg::ref_ptr<vsg::StateGroup> generateMyObject(vsg::ref_ptr<vsg::Options> options);
 
 vsg::ref_ptr<vsg::Node> generateFlatOcean(vsg::ref_ptr<vsg::Builder> builder)
 {
@@ -150,10 +150,10 @@ int main(int argc, char** argv)
     // scene->addChild(loadPlane(options));
     // scene->addChild(loadBoat(options));
 
-    scene->addChild(generateMyObject());
+    scene->addChild(generateMyObject(options));
 
-    // scene->addChild(generateFlatOcean(builder));
-    scene->addChild(generateBumpyOcean(builder));
+    scene->addChild(generateFlatOcean(builder));
+    // scene->addChild(generateBumpyOcean(builder));
 
     // compute the bounds of the scene graph to help position camera
     // auto bounds = vsg::visit<vsg::ComputeBounds>(scene).bounds;

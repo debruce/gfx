@@ -3,53 +3,25 @@
 #include <iomanip>
 #include <sstream>
 
-static std::string VERT{R"(
-#version 450
-#extension GL_ARB_separate_shader_objects : enable
+struct SetMyPipelineStates : public vsg::Visitor
+{
+    VkPrimitiveTopology topo;
 
-layout(push_constant) uniform PushConstants {
-    mat4 projection;
-    mat4 modelView;
+    SetMyPipelineStates(const VkPrimitiveTopology& topo) : topo(topo) {}
+
+    void apply(vsg::Object& object) { object.traverse(*this); }
+    void apply(vsg::RasterizationState& rs)
+    {
+        rs.lineWidth = 1.0;
+        rs.cullMode = VK_CULL_MODE_NONE;
+    }
+    void apply(vsg::InputAssemblyState& ias)
+    {
+        ias.topology = topo;
+    }
 };
 
-layout(set = 0, binding = 0) uniform Params {
-    vec4 color;
-} parms;
-
-layout(location = 0) in vec3 vertex;
-
-layout(location = 0) out vec4 fragColor;
-
-out gl_PerVertex {
-    vec4 gl_Position;
-    float gl_PointSize;
-};
-
-void main()
-{
-    gl_Position = (projection * modelView) * vec4(vertex, 1.0);
-    fragColor = parms.color;
-    gl_PointSize = 3.0;
-}
-
-)"};
-
-static std::string FRAG{R"(
-#version 450
-#extension GL_ARB_separate_shader_objects : enable
-
-layout(location = 0) in vec4 fragColor;
-
-layout(location = 0) out vec4 color;
-
-void main()
-{
-    color = fragColor;
-}
-
-)"};
-
-vsg::ref_ptr<vsg::StateGroup> generateMyObject()
+vsg::ref_ptr<vsg::StateGroup> generateMyObject(vsg::ref_ptr<vsg::Options> options)
 {
     auto vertices = vsg::vec3Array::create(52);
     (*vertices)[0] = vsg::vec3(0, 0, 0);
@@ -57,8 +29,8 @@ vsg::ref_ptr<vsg::StateGroup> generateMyObject()
         (*vertices)[i+1] = vsg::vec3(cos(i * 2 * M_PI / 50), 0, sin(i * 2 * M_PI / 50));
     }
 
-    auto vertexShader = vsg::ShaderStage::create(VK_SHADER_STAGE_VERTEX_BIT, "main", VERT);
-    auto fragmentShader = vsg::ShaderStage::create(VK_SHADER_STAGE_FRAGMENT_BIT, "main", FRAG);
+    auto vertexShader = vsg::read_cast<vsg::ShaderStage>("../shaders/myShader.vert", options);
+    auto fragmentShader = vsg::read_cast<vsg::ShaderStage>("../shaders/myShader.frag", options);
     auto shaderSet = vsg::ShaderSet::create(vsg::ShaderStages{vertexShader, fragmentShader});
 
     shaderSet->addPushConstantRange("pc", "", VK_SHADER_STAGE_VERTEX_BIT, 0, 128);
@@ -67,24 +39,7 @@ vsg::ref_ptr<vsg::StateGroup> generateMyObject()
 
     auto gpConf = vsg::GraphicsPipelineConfigurator::create(shaderSet);
 
-    // gpConf->pipelineStates.push_back(ExtendedRasterizationState::create());
-    struct SetPipelineStates : public vsg::Visitor
-    {
-        VkPrimitiveTopology topo;
-
-        SetPipelineStates(const VkPrimitiveTopology& topo) : topo(topo) {}
-
-        void apply(vsg::Object& object) { object.traverse(*this); }
-        void apply(vsg::RasterizationState& rs)
-        {
-            rs.lineWidth = 1.0;
-            rs.cullMode = VK_CULL_MODE_NONE;
-        }
-        void apply(vsg::InputAssemblyState& ias)
-        {
-            ias.topology = topo;
-        }
-    } sps(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+    SetMyPipelineStates sps(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN);
 
     gpConf->accept(sps);
     gpConf->init();
