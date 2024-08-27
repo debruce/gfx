@@ -24,4 +24,5 @@ void main()
 {
     gl_Position = (projection * modelView) * vec4(vsg_Vertex, 1.0);
     vertexColor = vsg_Color;
+    texCoord0 = vsg_TexCoord0;
 }
