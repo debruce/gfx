@@ -136,18 +136,104 @@ vsg::ref_ptr<vsg::Node> MyBuilder::createFrustum(const vsg::GeometryInfo& info, 
     return subgraph;
 }
 
-vsg::ref_ptr<vsg::Node> MyBuilder::createBat(const vsg::GeometryInfo& info, const vsg::StateInfo& stateInfo, vsg::vec2Array data)
+static vsg::vec3 calcNorm(const vsg::vec3& o, const vsg::vec3& a, const vsg::vec3& b)
 {
-    // using namespace vsg;
+    return vsg::normalize(vsg::cross(a - o, b - o));
+}
 
-    // auto& subgraph = _frustums[std::make_pair(info, stateInfo)];
-    // if (subgraph)
-    // {
-    //     return subgraph;
-    // }
 
-    // uint32_t instanceCount = 1;
-    // auto positions = instancePositions(info, instanceCount);
-    // auto colors = instanceColors(info, instanceCount);
+vsg::ref_ptr<vsg::Node> MyBuilder::createBat(const vsg::GeometryInfo& info, const vsg::StateInfo& stateInfo) // , vsg::vec2Array data)
+{
+    using namespace vsg;
+
+    auto& subgraph = _frustums[std::make_pair(info, stateInfo)];
+    if (subgraph)
+    {
+        return subgraph;
+    }
+
+    uint32_t instanceCount = 1;
+    auto positions = instancePositions(info, instanceCount);
+    auto colors = instanceColors(info, instanceCount);
+
+    auto dx = info.dx;
+    auto dy = info.dy;
+    auto dz = info.dz;
+    auto origin = info.position;
+    auto [t_origin, t_scale, t_top] = y_texcoord(stateInfo).value;
+
+    const size_t square_count = 50;
+
+    auto vertices = vec3Array::create(4 * square_count);
+    auto& v = *vertices;
+
+    auto normals = vec3Array::create(4 * square_count);
+    auto& n = *normals;
+
+    // auto texcoords = vec2Array::create(4 * square_count);
+    // auto& t = *texcoords;
+
+    auto indices = ushortArray::create(3 * 2 * square_count);
+    auto& ndcs = *indices;
+
+    double radius = 5.0;
+    float height = 1.0;
+    double angle0 = 0.0;
+    size_t vert = 0;
+    size_t iindex = 0;
+
+    for (size_t i = 0; i < square_count; i++) {
+        double angle1 = 2 * M_PI * (i+1) / square_count;
+        auto p0 = vec3{float(cos(angle0) * radius), float(sin(angle0) * radius), 0.0f};
+        auto p1 = vec3{p0.x, p0.y, height};
+        auto p2 = vec3{float(cos(angle1) * radius), float(sin(angle1) * radius), 0.0f};
+        auto p3 = vec3{p2.x, p2.y, height};
+        auto norm = calcNorm(p0, p1, p2);
+
+        ndcs[iindex++] = vert;
+        ndcs[iindex++] = vert + 1;
+        ndcs[iindex++] = vert + 2;
+        ndcs[iindex++] = vert + 1;
+        ndcs[iindex++] = vert + 3;
+        ndcs[iindex++] = vert + 2;
+
+        v[vert] = p0;
+        n[vert++] = norm;
+
+        v[vert] = p1;
+        n[vert++] = norm;
+
+        v[vert] = p2;
+        n[vert++] = norm;
+
+        v[vert] = p3;
+        n[vert++] = norm;
+
+        angle0 = angle1;
+    }
+
+    if (info.transform != identity)
+    {
+        transform(info.transform, vertices, normals);
+    }
+
+
+    // setup geometry
+    auto vid = VertexIndexDraw::create();
+
+    DataList arrays;
+    arrays.push_back(vertices);
+    if (normals) arrays.push_back(normals);
+    // if (texcoords) arrays.push_back(texcoords);
+    // if (colors) arrays.push_back(colors);
+    if (positions) arrays.push_back(positions);
+    vid->assignArrays(arrays);
+
+    vid->assignIndices(indices);
+    vid->indexCount = static_cast<uint32_t>(indices->size());
+    vid->instanceCount = instanceCount;
+
+    subgraph = decorateAndCompileIfRequired(info, stateInfo, vid);
+    return subgraph;
     return nullptr;
 }

@@ -22,7 +22,13 @@ out gl_PerVertex { vec4 gl_Position; };
 
 void main()
 {
-    gl_Position = (projection * modelView) * vec4(vsg_Vertex, 1.0);
+    vec4 vertex = vec4(vsg_Vertex, 1.0);
+    vec4 normal = vec4(vsg_Normal, 0.0);
+
+    gl_Position = (projection * modelView) * vertex;
+    eyePos = (modelView * vertex).xyz;
+    viewDir = -eyePos;
+    normalDir = (modelView * normal).xyz;
     vertexColor = vsg_Color;
     texCoord0 = vsg_TexCoord0;
 }

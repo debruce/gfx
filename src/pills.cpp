@@ -4,6 +4,7 @@
 
 #include "Demangle.h"
 #include "DynamicText.h"
+#include "DynamicLighting.h"
 #include "MyBuilder.h"
 
 #include <iostream>
@@ -40,7 +41,7 @@ vsg::ref_ptr<vsg::Node> loadBoat(vsg::ref_ptr<vsg::Options> options)
         * vsg::rotate(vsg::radians(90.0), -1.0, 0.0, 0.0));
 }
 
-vsg::ref_ptr<vsg::StateGroup> generateMyObject(vsg::ref_ptr<vsg::Options> options);
+vsg::ref_ptr<vsg::StateGroup> generateMyObject(vsg::ref_ptr<vsg::Options> options, const vsg::StateInfo& si);
 
 vsg::ref_ptr<vsg::Node> generateFlatOcean(vsg::ref_ptr<vsg::Builder> builder)
 {
@@ -152,8 +153,20 @@ int main(int argc, char** argv)
 
     vsg::GeometryInfo geomInfo;
     vsg::StateInfo stateInfo;
+    stateInfo.wireframe = false;
+    stateInfo.two_sided = true;
     scene->addChild(builder->createSphere(geomInfo, stateInfo));
-    scene->addChild(generateMyObject(options));
+    {
+        vsg::GeometryInfo g2;
+        g2.dx = vsg::vec3{5.0, 0.0, 0.0};
+        g2.dy = vsg::vec3{0.0, 5.0, 0.0};
+        g2.dz = vsg::vec3{0.0, 0.0, 1.0};
+        g2.position = vsg::vec3{0.0, 0.0, -1.0};
+        vsg::StateInfo s2;
+        scene->addChild(builder->createCylinder(g2, s2));
+    }
+    scene->addChild(builder->createBat(geomInfo, stateInfo));
+    // scene->addChild(generateMyObject(options, stateInfo));
 
     // scene->addChild(generateFlatOcean(builder));
     // scene->addChild(generateBumpyOcean(builder));
@@ -161,7 +174,8 @@ int main(int argc, char** argv)
     // compute the bounds of the scene graph to help position camera
     // auto bounds = vsg::visit<vsg::ComputeBounds>(scene).bounds;
 
-    scene = lightupScene(scene, .3f, .85f, vsg::vec3{0.0f, -1.0f, -1.0f});
+    // scene = lightupScene(scene, .3f, .85f, vsg::vec3{0.0f, -1.0f, -1.0f});
+    auto litScene = DynamicLighting::create(scene);
 
     // create the viewer and assign window(s) to it
     auto viewer = vsg::Viewer::create();
@@ -188,7 +202,7 @@ int main(int argc, char** argv)
     // add the camera and scene graph to View
     auto view = vsg::View::create();
     view->camera = camera;
-    view->addChild(scene);
+    view->addChild(litScene);
 
     // add close handler to respond to the close window button and to pressing escape
     viewer->addEventHandler(vsg::CloseHandler::create(viewer));
@@ -209,6 +223,7 @@ int main(int argc, char** argv)
         auto t = std::chrono::duration<double, std::chrono::seconds::period>(vsg::clock::now() - startTime).count();
         grab_node->matrix = vsg::translate(vsg::vec3(0.0f, sin(t), 1.0f))
             * vsg::scale(vsg::vec3(.2f, .2f, .2f)) * vsg::rotate(vsg::radians(45.0f * (float)sin(t)), 0.0f, 1.0f, 0.0f);
+        litScene->setDirectional(1.0, vsg::vec3{cosf(t), sinf(t), -1.0f});
         // grab_node->matrix = vsg::rotate(vsg::radians(45.0f * (float)sin(t)), 0.0f, 1.0f, 0.0f);
 
         // gpConf->assignDescriptor("color", vsg::vec4Array::create({{1.0f, sinf(t) * .5f + .5f, 0.0f, 1.0f}}));

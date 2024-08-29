@@ -6,10 +6,13 @@ vsg::ref_ptr<vsg::Group> lightupScene(vsg::ref_ptr<vsg::Group> scene, const floa
     auto litScene = vsg::Group::create();
     litScene->addChild(scene);
 
+    // float span = 5.0f;
+
     auto ambientLight = vsg::AmbientLight::create();
     ambientLight->name = "ambient";
-    ambientLight->color.set(1.0f, 1.0f, 1.0f);
-    ambientLight->intensity = ambientIntensity;
+    ambientLight->color.set(1.0f, 0.0f, 0.0f);
+    // ambientLight->intensity = ambientIntensity;
+    ambientLight->intensity = 0;
     litScene->addChild(ambientLight);
 
     auto directionalLight = vsg::DirectionalLight::create();
