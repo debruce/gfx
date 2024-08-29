@@ -1,4 +1,5 @@
 #include "MyBuilder.h"
+#include <iostream>
 
 vsg::ref_ptr<vsg::Node> MyBuilder::createFrustum(const vsg::GeometryInfo& info, const vsg::StateInfo& stateInfo, const float& pitch)
 {
@@ -142,7 +143,7 @@ static vsg::vec3 calcNorm(const vsg::vec3& o, const vsg::vec3& a, const vsg::vec
 }
 
 
-vsg::ref_ptr<vsg::Node> MyBuilder::createBat(const vsg::GeometryInfo& info, const vsg::StateInfo& stateInfo) // , vsg::vec2Array data)
+vsg::ref_ptr<vsg::Node> MyBuilder::createBat(vsg::ref_ptr<vsg::vec2Array> curve, const vsg::GeometryInfo& info, const vsg::StateInfo& stateInfo)
 {
     using namespace vsg;
 
@@ -164,52 +165,62 @@ vsg::ref_ptr<vsg::Node> MyBuilder::createBat(const vsg::GeometryInfo& info, cons
 
     const size_t square_count = 50;
 
-    auto vertices = vec3Array::create(4 * square_count);
+    size_t row_count = curve->valueCount() - 1;
+
+    auto vertices = vec3Array::create(4 * square_count * row_count);
     auto& v = *vertices;
 
-    auto normals = vec3Array::create(4 * square_count);
+    auto normals = vec3Array::create(4 * square_count * row_count);
     auto& n = *normals;
 
-    // auto texcoords = vec2Array::create(4 * square_count);
+    // auto texcoords = vec2Array::create(4 * square_count * row_count);
     // auto& t = *texcoords;
 
-    auto indices = ushortArray::create(3 * 2 * square_count);
+    auto indices = ushortArray::create(3 * 2 * square_count * row_count);
     auto& ndcs = *indices;
 
-    double radius = 5.0;
-    float height = 1.0;
-    double angle0 = 0.0;
     size_t vert = 0;
     size_t iindex = 0;
 
-    for (size_t i = 0; i < square_count; i++) {
-        double angle1 = 2 * M_PI * (i+1) / square_count;
-        auto p0 = vec3{float(cos(angle0) * radius), float(sin(angle0) * radius), 0.0f};
-        auto p1 = vec3{p0.x, p0.y, height};
-        auto p2 = vec3{float(cos(angle1) * radius), float(sin(angle1) * radius), 0.0f};
-        auto p3 = vec3{p2.x, p2.y, height};
-        auto norm = calcNorm(p0, p1, p2);
+    for (size_t row = 0; row < row_count; row++) {
+        using namespace std;
+        auto z0 = (*curve)[row].x;
+        auto r0 = (*curve)[row].y;
+        auto z1 = (*curve)[row+1].x;
+        auto r1 = (*curve)[row+1].y;
+        cout << "z0=" << z0 << " r0=" << r0 << " z1=" << z1 << " r1=" << r1 << endl;
 
-        ndcs[iindex++] = vert;
-        ndcs[iindex++] = vert + 1;
-        ndcs[iindex++] = vert + 2;
-        ndcs[iindex++] = vert + 1;
-        ndcs[iindex++] = vert + 3;
-        ndcs[iindex++] = vert + 2;
+        double angle0 = 0.0;
 
-        v[vert] = p0;
-        n[vert++] = norm;
+        for (size_t i = 0; i < square_count; i++) {
+            double angle1 = 2 * M_PI * (i+1) / square_count;
+            auto p0 = vec3{float(cos(angle0) * r0), float(sin(angle0) * r0), z0};
+            auto p1 = vec3{float(cos(angle0) * r1), float(sin(angle0) * r1), z1};
+            auto p2 = vec3{float(cos(angle1) * r0), float(sin(angle1) * r0), z0};
+            auto p3 = vec3{float(cos(angle1) * r1), float(sin(angle1) * r1), z1};
+            auto norm = calcNorm(p0, p1, p2);
 
-        v[vert] = p1;
-        n[vert++] = norm;
+            ndcs[iindex++] = vert;
+            ndcs[iindex++] = vert + 1;
+            ndcs[iindex++] = vert + 2;
+            ndcs[iindex++] = vert + 1;
+            ndcs[iindex++] = vert + 3;
+            ndcs[iindex++] = vert + 2;
 
-        v[vert] = p2;
-        n[vert++] = norm;
+            v[vert] = p0;
+            n[vert++] = norm;
 
-        v[vert] = p3;
-        n[vert++] = norm;
+            v[vert] = p1;
+            n[vert++] = norm;
 
-        angle0 = angle1;
+            v[vert] = p2;
+            n[vert++] = norm;
+
+            v[vert] = p3;
+            n[vert++] = norm;
+
+            angle0 = angle1;
+        }
     }
 
     if (info.transform != identity)

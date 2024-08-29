@@ -155,17 +155,23 @@ int main(int argc, char** argv)
     vsg::StateInfo stateInfo;
     stateInfo.wireframe = false;
     stateInfo.two_sided = true;
-    scene->addChild(builder->createSphere(geomInfo, stateInfo));
-    {
-        vsg::GeometryInfo g2;
-        g2.dx = vsg::vec3{5.0, 0.0, 0.0};
-        g2.dy = vsg::vec3{0.0, 5.0, 0.0};
-        g2.dz = vsg::vec3{0.0, 0.0, 1.0};
-        g2.position = vsg::vec3{0.0, 0.0, -1.0};
-        vsg::StateInfo s2;
-        scene->addChild(builder->createCylinder(g2, s2));
-    }
-    scene->addChild(builder->createBat(geomInfo, stateInfo));
+    // scene->addChild(builder->createSphere(geomInfo, stateInfo));
+    // {
+    //     vsg::GeometryInfo g2;
+    //     g2.dx = vsg::vec3{5.0, 0.0, 0.0};
+    //     g2.dy = vsg::vec3{0.0, 5.0, 0.0};
+    //     g2.dz = vsg::vec3{0.0, 0.0, 1.0};
+    //     g2.position = vsg::vec3{0.0, 0.0, -1.0};
+    //     vsg::StateInfo s2;
+    //     scene->addChild(builder->createCylinder(g2, s2));
+    // }
+    auto bat_curve = vsg::vec2Array::create({
+        {0.0, .1},
+        {1.0, 5.0},
+        {2.0, 5.0},
+        {3.0, .1}
+        });
+    scene->addChild(builder->createBat(bat_curve, geomInfo, stateInfo));
     // scene->addChild(generateMyObject(options, stateInfo));
 
     // scene->addChild(generateFlatOcean(builder));

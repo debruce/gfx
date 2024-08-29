@@ -13,5 +13,5 @@ public:
     MyBuilder& operator=(const vsg::Builder& rhs) = delete;
 
     vsg::ref_ptr<vsg::Node> createFrustum(const vsg::GeometryInfo& info, const vsg::StateInfo& stateInfo, const float& pitch);
-    vsg::ref_ptr<vsg::Node> createBat(const vsg::GeometryInfo& info, const vsg::StateInfo& stateInfo); // , vsg::vec2Array pitch);
+    vsg::ref_ptr<vsg::Node> createBat(vsg::ref_ptr<vsg::vec2Array> curve, const vsg::GeometryInfo& info, const vsg::StateInfo& stateInfo);
 };
