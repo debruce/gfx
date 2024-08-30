@@ -41,7 +41,7 @@ vsg::ref_ptr<vsg::Node> loadBoat(vsg::ref_ptr<vsg::Options> options)
         * vsg::rotate(vsg::radians(90.0), -1.0, 0.0, 0.0));
 }
 
-vsg::ref_ptr<vsg::StateGroup> generateMyObject(vsg::ref_ptr<vsg::Options> options, const vsg::StateInfo& si);
+vsg::ref_ptr<vsg::StateGroup> generateMyObject(vsg::ref_ptr<vsg::vec2Array> curve, vsg::ref_ptr<vsg::Options> options, const vsg::StateInfo& si);
 
 vsg::ref_ptr<vsg::Node> generateFlatOcean(vsg::ref_ptr<vsg::Builder> builder)
 {
@@ -153,29 +153,20 @@ int main(int argc, char** argv)
 
     vsg::GeometryInfo geomInfo;
     vsg::StateInfo stateInfo;
-    stateInfo.wireframe = false;
+    // stateInfo.wireframe = false;
     stateInfo.two_sided = true;
-    // scene->addChild(builder->createSphere(geomInfo, stateInfo));
-    // {
-    //     vsg::GeometryInfo g2;
-    //     g2.dx = vsg::vec3{5.0, 0.0, 0.0};
-    //     g2.dy = vsg::vec3{0.0, 5.0, 0.0};
-    //     g2.dz = vsg::vec3{0.0, 0.0, 1.0};
-    //     g2.position = vsg::vec3{0.0, 0.0, -1.0};
-    //     vsg::StateInfo s2;
-    //     scene->addChild(builder->createCylinder(g2, s2));
-    // }
     auto bat_curve = vsg::vec2Array::create({
         {0.0, 0.0},
         {1.0, 5.0},
-        {2.0, 5.0},
-        {3.0, 0.0},
-        {4.0, 1.0},
-        {5.0, 2.0},
-        {6.0, 0.0}
+        {2.0, 0.0},
+        // {3.0, 0.0},
+        // {4.0, 1.0},
+        // {5.0, 2.0},
+        // {6.0, 0.0}
         });
+    scene->addChild(generateMyObject(bat_curve, options, stateInfo));
+    geomInfo.transform = vsg::translate(vsg::vec3{0.0, 0.0, -7.0});
     scene->addChild(builder->createBat(bat_curve, geomInfo, stateInfo));
-    // scene->addChild(generateMyObject(options, stateInfo));
 
     // scene->addChild(generateFlatOcean(builder));
     // scene->addChild(generateBumpyOcean(builder));

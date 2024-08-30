@@ -81,7 +81,8 @@ struct SetMyPipelineStates : public vsg::Visitor
 
     void apply(vsg::RasterizationState& rs) override
     {
-        if (si.two_sided) rs.cullMode = VK_CULL_MODE_NONE;
+        // if (si.two_sided)
+        rs.cullMode = VK_CULL_MODE_NONE;
     }
 
     void apply(vsg::InputAssemblyState& ias) override
@@ -104,100 +105,108 @@ vsg::vec3 calcNorm(const vsg::vec3& o, const vsg::vec3& a, const vsg::vec3& b)
     return vsg::normalize(vsg::cross(a - o, b - o));
 }
 
-vsg::ref_ptr<vsg::StateGroup> generateMyObject(vsg::ref_ptr<vsg::Options> options, const vsg::StateInfo& si)
+vsg::ref_ptr<vsg::StateGroup> generateMyObject(vsg::ref_ptr<vsg::vec2Array> curve, vsg::ref_ptr<vsg::Options> options, const vsg::StateInfo& si)
 {
-    // auto shaderSet = pbr_ShaderSet(options);
-    auto shaderSet = vsg::createPhongShaderSet(options);
-    auto gpConf = vsg::GraphicsPipelineConfigurator::create(shaderSet);
+    using namespace vsg;
+
+    const size_t square_count = 50;
+
+    size_t row_count = curve->valueCount() - 1;
+
+    auto vertices = vec3Array::create(4 * square_count * row_count);
+    auto& v = *vertices;
+
+    auto normals = vec3Array::create(4 * square_count * row_count);
+    auto& n = *normals;
+
+    auto texcoords = vec2Array::create(4 * square_count * row_count);
+    auto& t = *texcoords;
+
+    auto indices = ushortArray::create(3 * 2 * square_count * row_count);
+    auto& ndcs = *indices;
+
+    size_t vert = 0;
+    size_t iindex = 0;
+
+    double zScale = 1.0 / (*curve)[curve->valueCount()-1].x - (*curve)[0].x;
+
+    for (size_t row = 0; row < row_count; row++) {
+        using namespace std;
+        auto z0 = (*curve)[row].x;
+        auto r0 = (*curve)[row].y;
+        auto z1 = (*curve)[row+1].x;
+        auto r1 = (*curve)[row+1].y;
+
+        for (size_t i = 0; i < square_count; i++) {
+            float percent0 = float(i) / square_count;
+            float percent1 = float(i+1) / square_count;
+            float c0 = cosf(2 * M_PI * percent0);
+            float s0 = sinf(2 * M_PI * percent0);
+            float c1 = cosf(2 * M_PI * percent1);
+            float s1 = sinf(2 * M_PI * percent1);
+            auto p0 = vec3{c0 * r0, s0 * r0, z0};
+            auto p1 = vec3{c0 * r1, s0 * r1, z1};
+            auto p2 = vec3{c1 * r0, s1 * r0, z0};
+            auto p3 = vec3{c1 * r1, s1 * r1, z1};
+            auto norm = calcNorm(p0, p1, p2);
+
+            float zCoord0 = (z0 - (*curve)[0].x) * zScale;
+            float zCoord1 = (z1 - (*curve)[0].x) * zScale;            
+            ndcs[iindex++] = vert;
+            ndcs[iindex++] = vert + 1;
+            ndcs[iindex++] = vert + 2;
+            ndcs[iindex++] = vert + 1;
+            ndcs[iindex++] = vert + 3;
+            ndcs[iindex++] = vert + 2;
+
+            v[vert] = p0;
+            n[vert] = norm;
+            t[vert] = vec2{percent0, zCoord0};
+            vert++;
+
+            v[vert] = p1;
+            n[vert] = norm;
+            t[vert] = vec2{percent1, zCoord0};
+            vert++;
+
+            v[vert] = p2;
+            n[vert] = norm;
+            t[vert] = vec2{percent0, zCoord1};
+            vert++;
+
+            v[vert] = p3;
+            n[vert] = norm;
+            t[vert] = vec2{percent1, zCoord1};
+            vert++;
+        }
+    }
+
+    auto shaderSet = createPhongShaderSet(options);
+    auto gpConf = GraphicsPipelineConfigurator::create(shaderSet);
 
     SetMyPipelineStates sps(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, si);
 
     gpConf->accept(sps);
 
-    const size_t square_count = 50;
-    const size_t triangle_count = square_count * 2;
+    DataList vertexArrays;
+    gpConf->assignArray(vertexArrays, "vsg_Vertex", VK_VERTEX_INPUT_RATE_VERTEX, vertices);
+    gpConf->assignArray(vertexArrays, "vsg_Normals", VK_VERTEX_INPUT_RATE_VERTEX, normals);
+    gpConf->assignArray(vertexArrays, "vsg_TexCoord0", VK_VERTEX_INPUT_RATE_VERTEX, texcoords);
+    gpConf->assignArray(vertexArrays, "vsg_Color", VK_VERTEX_INPUT_RATE_VERTEX, vec4Value::create(vec4{1.0f, 1.0f, 1.0f, 1.0f}));
 
-    auto vertices_ptr = vsg::vec3Array2D::create(3, triangle_count);
-    auto& vertices = *vertices_ptr;
-
-    auto normals_ptr = vsg::vec3Array2D::create(3, triangle_count);
-    auto& normals = *normals_ptr;
-
-    auto texCoord_ptr = vsg::vec2Array2D::create(3, triangle_count);
-    auto& texCoord = *texCoord_ptr;
-
-    auto angle_step = 2 * M_PI / square_count;
-    float z0 = 0.0;
-    float z1 = 1.5;
-    size_t v_index = 0;
-
-    for (size_t i = 0; i < square_count; i++) {
-        float percent0 = float(i) / square_count;
-        float percent2 = float(i+1) / square_count;
-        float angle = 2 * M_PI * percent0;
-        float x0 = cos(angle) * 5.0;
-        float y0 = sin(angle) * 5.0;
-        float x1 = cos(angle + angle_step) * 5.0;
-        float y1 = sin(angle + angle_step) * 5.0;
-
-        auto p0 = vsg::vec3{x0, y0, z0};
-        auto p1 = vsg::vec3{x0, y0, z1};
-        auto p2 = vsg::vec3{x1, y1, z0};
-        auto p3 = vsg::vec3{x1, y1, z1};
-        auto norm = calcNorm(p0, p1, p2);
-
-        vertices(0,v_index) = p0;
-        vertices(1,v_index) = p1;
-        vertices(2,v_index) = p2;
-
-        normals(0,v_index) = -norm;
-        normals(1,v_index) = -norm;
-        normals(2,v_index) = -norm;
-
-        texCoord(0,v_index) = vsg::vec2{percent0, 0.0};
-        texCoord(1,v_index) = vsg::vec2{percent0, 1.0};
-        texCoord(2,v_index) = vsg::vec2{percent2, 0.0};
-
-        v_index++;
-
-        vertices(0,v_index) = p1;
-        vertices(1,v_index) = p2;
-        vertices(2,v_index) = p3;
-
-        normals(0,v_index) = norm;
-        normals(1,v_index) = norm;
-        normals(2, v_index) = norm;
-
-        texCoord(0, v_index) = vsg::vec2{percent0, 1.0};
-        texCoord(1, v_index) = vsg::vec2{percent2, 0.0};
-        texCoord(2, v_index) = vsg::vec2{percent2, 1.0};
-
-        v_index++;
-    }
-
-    vsg::DataList vertexArrays;
-    gpConf->assignArray(vertexArrays, "vsg_Vertex", VK_VERTEX_INPUT_RATE_VERTEX, vertices_ptr);
-    gpConf->assignArray(vertexArrays, "vsg_Normals", VK_VERTEX_INPUT_RATE_VERTEX, normals_ptr);
-    gpConf->assignArray(vertexArrays, "vsg_TexCoord0", VK_VERTEX_INPUT_RATE_VERTEX, texCoord_ptr);
-    gpConf->assignArray(vertexArrays, "vsg_Color", VK_VERTEX_INPUT_RATE_VERTEX, vsg::vec4Value::create(vsg::vec4{1.0f, 1.0f, 1.0f, 1.0f}));
-
-    // auto mat = vsg::PbrMaterialValue::create();
-    // mat->value().baseColorFactor.set(1.0f, 0.0f, 0.0f, 1.0f);
-    // mat->value().diffuseFactor.set(0.0f, 1.0f, 0.0f, 1.0f);
-    // mat->value().specular.set(1.0f, 0.0f, 0.0f, 1.0f); // red specular highlight
-
-    auto mat = vsg::PhongMaterialValue::create();
+    auto mat = PhongMaterialValue::create();
 
     gpConf->assignDescriptor("material", mat);
     gpConf->init();
 
-    auto vertexDraw = vsg::VertexDraw::create();
-    vertexDraw->assignArrays(vertexArrays);
-    vertexDraw->vertexCount = vertices.valueCount();
-    vertexDraw->instanceCount = 1;
+    auto vid = VertexIndexDraw::create();
+    vid->assignArrays(vertexArrays);
+    vid->assignIndices(indices);
+    vid->indexCount = 3 * 2 * square_count * row_count; // indices->valueCount();
+    vid->instanceCount = 1;
 
-    auto geomGroup = vsg::StateGroup::create();
-    geomGroup->addChild(vertexDraw);
+    auto geomGroup = StateGroup::create();
+    geomGroup->addChild(vid);
     // gpConf->assignDescriptor("color", vsg::vec4Array::create({vsg::vec4{1.0, .5, 0.0, 1.0}}));
     // gpConf->enableDescriptor("color");
     gpConf->copyTo(geomGroup);
