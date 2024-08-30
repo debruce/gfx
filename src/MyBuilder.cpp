@@ -173,8 +173,8 @@ vsg::ref_ptr<vsg::Node> MyBuilder::createBat(vsg::ref_ptr<vsg::vec2Array> curve,
     auto normals = vec3Array::create(4 * square_count * row_count);
     auto& n = *normals;
 
-    // auto texcoords = vec2Array::create(4 * square_count * row_count);
-    // auto& t = *texcoords;
+    auto texcoords = vec2Array::create(4 * square_count * row_count);
+    auto& t = *texcoords;
 
     auto indices = ushortArray::create(3 * 2 * square_count * row_count);
     auto& ndcs = *indices;
@@ -182,24 +182,30 @@ vsg::ref_ptr<vsg::Node> MyBuilder::createBat(vsg::ref_ptr<vsg::vec2Array> curve,
     size_t vert = 0;
     size_t iindex = 0;
 
+    double zScale = 1.0 / (*curve)[curve->valueCount()-1].x - (*curve)[0].x;
+
     for (size_t row = 0; row < row_count; row++) {
         using namespace std;
         auto z0 = (*curve)[row].x;
         auto r0 = (*curve)[row].y;
         auto z1 = (*curve)[row+1].x;
         auto r1 = (*curve)[row+1].y;
-        cout << "z0=" << z0 << " r0=" << r0 << " z1=" << z1 << " r1=" << r1 << endl;
-
-        double angle0 = 0.0;
 
         for (size_t i = 0; i < square_count; i++) {
-            double angle1 = 2 * M_PI * (i+1) / square_count;
-            auto p0 = vec3{float(cos(angle0) * r0), float(sin(angle0) * r0), z0};
-            auto p1 = vec3{float(cos(angle0) * r1), float(sin(angle0) * r1), z1};
-            auto p2 = vec3{float(cos(angle1) * r0), float(sin(angle1) * r0), z0};
-            auto p3 = vec3{float(cos(angle1) * r1), float(sin(angle1) * r1), z1};
+            float percent0 = float(i) / square_count;
+            float percent1 = float(i+1) / square_count;
+            float c0 = cosf(2 * M_PI * percent0);
+            float s0 = sinf(2 * M_PI * percent0);
+            float c1 = cosf(2 * M_PI * percent1);
+            float s1 = sinf(2 * M_PI * percent1);
+            auto p0 = vec3{c0 * r0, s0 * r0, z0};
+            auto p1 = vec3{c0 * r1, s0 * r1, z1};
+            auto p2 = vec3{c1 * r0, s1 * r0, z0};
+            auto p3 = vec3{c1 * r1, s1 * r1, z1};
             auto norm = calcNorm(p0, p1, p2);
 
+            float zCoord0 = (z0 - (*curve)[0].x) * zScale;
+            float zCoord1 = (z1 - (*curve)[0].x) * zScale;            
             ndcs[iindex++] = vert;
             ndcs[iindex++] = vert + 1;
             ndcs[iindex++] = vert + 2;
@@ -208,18 +214,24 @@ vsg::ref_ptr<vsg::Node> MyBuilder::createBat(vsg::ref_ptr<vsg::vec2Array> curve,
             ndcs[iindex++] = vert + 2;
 
             v[vert] = p0;
-            n[vert++] = norm;
+            n[vert] = norm;
+            t[vert] = vec2{percent0, zCoord0};
+            vert++;
 
             v[vert] = p1;
-            n[vert++] = norm;
+            n[vert] = norm;
+            t[vert] = vec2{percent1, zCoord0};
+            vert++;
 
             v[vert] = p2;
-            n[vert++] = norm;
+            n[vert] = norm;
+            t[vert] = vec2{percent0, zCoord1};
+            vert++;
 
             v[vert] = p3;
-            n[vert++] = norm;
-
-            angle0 = angle1;
+            n[vert] = norm;
+            t[vert] = vec2{percent1, zCoord1};
+            vert++;
         }
     }
 
@@ -235,7 +247,7 @@ vsg::ref_ptr<vsg::Node> MyBuilder::createBat(vsg::ref_ptr<vsg::vec2Array> curve,
     DataList arrays;
     arrays.push_back(vertices);
     if (normals) arrays.push_back(normals);
-    // if (texcoords) arrays.push_back(texcoords);
+    if (texcoords) arrays.push_back(texcoords);
     // if (colors) arrays.push_back(colors);
     if (positions) arrays.push_back(positions);
     vid->assignArrays(arrays);

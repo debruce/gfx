@@ -166,10 +166,13 @@ int main(int argc, char** argv)
     //     scene->addChild(builder->createCylinder(g2, s2));
     // }
     auto bat_curve = vsg::vec2Array::create({
-        {0.0, .1},
+        {0.0, 0.0},
         {1.0, 5.0},
         {2.0, 5.0},
-        {3.0, .1}
+        {3.0, 0.0},
+        {4.0, 1.0},
+        {5.0, 2.0},
+        {6.0, 0.0}
         });
     scene->addChild(builder->createBat(bat_curve, geomInfo, stateInfo));
     // scene->addChild(generateMyObject(options, stateInfo));
