@@ -16,3 +16,6 @@ add_executable(pills src/pills.cpp
     src/MyObject.cpp
     src/DynamicLighting.cpp)
 target_link_libraries(pills vsg::vsg vsgXchange::vsgXchange)
+
+add_executable(frac src/frac.cpp)
+target_link_libraries(frac vsg::vsg vsgXchange::vsgXchange)
