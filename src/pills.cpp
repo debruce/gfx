@@ -159,14 +159,17 @@ int main(int argc, char** argv)
         {0.0, 0.0},
         {1.0, 5.0},
         {2.0, 0.0},
-        // {3.0, 0.0},
-        // {4.0, 1.0},
-        // {5.0, 2.0},
-        // {6.0, 0.0}
+        {3.0, 3.0},
+        {4.0, 0.0}
         });
-    scene->addChild(generateMyObject(bat_curve, options, stateInfo));
-    geomInfo.transform = vsg::translate(vsg::vec3{0.0, 0.0, -7.0});
     scene->addChild(builder->createBat(bat_curve, geomInfo, stateInfo));
+    // auto bat_curve2 = vsg::vec2Array::create({
+    //     {-3.0, 0.0},
+    //     {-2.0, 5.0},
+    //     {-1.0, 0.0},
+    //     });
+    // scene->addChild(generateMyObject(bat_curve2, options, stateInfo));
+    // geomInfo.transform = vsg::translate(vsg::vec3{0.0, 0.0, -7.0});
 
     // scene->addChild(generateFlatOcean(builder));
     // scene->addChild(generateBumpyOcean(builder));

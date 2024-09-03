@@ -163,7 +163,7 @@ vsg::ref_ptr<vsg::Node> MyBuilder::createBat(vsg::ref_ptr<vsg::vec2Array> curve,
     auto origin = info.position;
     auto [t_origin, t_scale, t_top] = y_texcoord(stateInfo).value;
 
-    const size_t square_count = 50;
+    const size_t square_count = 200;
 
     size_t row_count = curve->valueCount() - 1;
 
