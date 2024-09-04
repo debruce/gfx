@@ -153,16 +153,32 @@ int main(int argc, char** argv)
 
     vsg::GeometryInfo geomInfo;
     vsg::StateInfo stateInfo;
+
+    geomInfo.dx = vsg::vec3{1.5, 0.0, 0.0};
+    geomInfo.dy = vsg::vec3{0.0, 1.5, 0.0};
+    geomInfo.dz = vsg::vec3{0.0, 0.0, 1.5};
+
+    geomInfo.position = vsg::vec3{-1.0, -1.0, 0.0};
+    scene->addChild(builder->createSphere(geomInfo, stateInfo));
+    geomInfo.position = vsg::vec3{1.0, -1.0, 0.0};
+    scene->addChild(builder->createSphere(geomInfo, stateInfo));
+    geomInfo.position = vsg::vec3{-1.0, 1.0, 0.0};
+    scene->addChild(builder->createSphere(geomInfo, stateInfo));
+    geomInfo.position = vsg::vec3{1.0, 1.0, 0.0};
+    scene->addChild(builder->createSphere(geomInfo, stateInfo));
+
     // stateInfo.wireframe = false;
-    stateInfo.two_sided = true;
-    auto bat_curve = vsg::vec2Array::create({
-        {0.0, 0.0},
-        {1.0, 5.0},
-        {2.0, 0.0},
-        {3.0, 3.0},
-        {4.0, 0.0}
-        });
-    scene->addChild(builder->createBat(bat_curve, geomInfo, stateInfo));
+
+    // stateInfo.two_sided = true;
+    // auto bat_curve = vsg::vec2Array::create({
+    //     {0.0, 0.0},
+    //     {1.0, 5.0},
+    //     {2.0, 0.0},
+    //     {3.0, 3.0},
+    //     {4.0, 0.0}
+    //     });
+    // scene->addChild(builder->createBat(bat_curve, geomInfo, stateInfo));
+
     // auto bat_curve2 = vsg::vec2Array::create({
     //     {-3.0, 0.0},
     //     {-2.0, 5.0},
@@ -215,7 +231,9 @@ int main(int argc, char** argv)
     auto commandGraph = vsg::CommandGraph::create(window, renderGraph);
     viewer->assignRecordAndSubmitTaskAndPresentation({commandGraph});
 
-    viewer->compile();
+    auto resourceHints = vsg::ResourceHints::create();
+    resourceHints->shadowMapSize = vsg::vec2{2048, 2048};
+    viewer->compile(resourceHints);
 
     auto startTime = vsg::clock::now();
     double numFramesCompleted = 0.0;
@@ -226,7 +244,7 @@ int main(int argc, char** argv)
         auto t = std::chrono::duration<double, std::chrono::seconds::period>(vsg::clock::now() - startTime).count();
         grab_node->matrix = vsg::translate(vsg::vec3(0.0f, sin(t), 1.0f))
             * vsg::scale(vsg::vec3(.2f, .2f, .2f)) * vsg::rotate(vsg::radians(45.0f * (float)sin(t)), 0.0f, 1.0f, 0.0f);
-        litScene->setDirectional(1.0, vsg::vec3{cosf(t), sinf(t), -1.0f});
+        litScene->setDirectional(1.0, vsg::vec3{cosf(t), sinf(t), 0.0f});
         // grab_node->matrix = vsg::rotate(vsg::radians(45.0f * (float)sin(t)), 0.0f, 1.0f, 0.0f);
 
         // gpConf->assignDescriptor("color", vsg::vec4Array::create({{1.0f, sinf(t) * .5f + .5f, 0.0f, 1.0f}}));
