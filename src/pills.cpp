@@ -42,6 +42,8 @@ vsg::ref_ptr<vsg::Node> loadBoat(vsg::ref_ptr<vsg::Options> options)
 }
 
 vsg::ref_ptr<vsg::StateGroup> generateMyObject(vsg::ref_ptr<vsg::vec2Array> curve, vsg::ref_ptr<vsg::Options> options, const vsg::StateInfo& si);
+vsg::ref_ptr<vsg::StateGroup> generateMyFrac(vsg::ref_ptr<vsg::Options> options);
+
 
 vsg::ref_ptr<vsg::Node> generateFlatOcean(vsg::ref_ptr<vsg::Builder> builder)
 {
@@ -151,21 +153,21 @@ int main(int argc, char** argv)
     // scene->addChild(loadPlane(options));
     // scene->addChild(loadBoat(options));
 
-    vsg::GeometryInfo geomInfo;
-    vsg::StateInfo stateInfo;
+    // vsg::GeometryInfo geomInfo;
+    // vsg::StateInfo stateInfo;
 
-    geomInfo.dx = vsg::vec3{1.5, 0.0, 0.0};
-    geomInfo.dy = vsg::vec3{0.0, 1.5, 0.0};
-    geomInfo.dz = vsg::vec3{0.0, 0.0, 1.5};
+    // geomInfo.dx = vsg::vec3{1.5, 0.0, 0.0};
+    // geomInfo.dy = vsg::vec3{0.0, 1.5, 0.0};
+    // geomInfo.dz = vsg::vec3{0.0, 0.0, 1.5};
 
-    geomInfo.position = vsg::vec3{-1.0, -1.0, 0.0};
-    scene->addChild(builder->createSphere(geomInfo, stateInfo));
-    geomInfo.position = vsg::vec3{1.0, -1.0, 0.0};
-    scene->addChild(builder->createSphere(geomInfo, stateInfo));
-    geomInfo.position = vsg::vec3{-1.0, 1.0, 0.0};
-    scene->addChild(builder->createSphere(geomInfo, stateInfo));
-    geomInfo.position = vsg::vec3{1.0, 1.0, 0.0};
-    scene->addChild(builder->createSphere(geomInfo, stateInfo));
+    // geomInfo.position = vsg::vec3{-1.0, -1.0, 0.0};
+    // scene->addChild(builder->createSphere(geomInfo, stateInfo));
+    // geomInfo.position = vsg::vec3{1.0, -1.0, 0.0};
+    // scene->addChild(builder->createSphere(geomInfo, stateInfo));
+    // geomInfo.position = vsg::vec3{-1.0, 1.0, 0.0};
+    // scene->addChild(builder->createSphere(geomInfo, stateInfo));
+    // geomInfo.position = vsg::vec3{1.0, 1.0, 0.0};
+    // scene->addChild(builder->createSphere(geomInfo, stateInfo));
 
     // stateInfo.wireframe = false;
 
@@ -186,6 +188,7 @@ int main(int argc, char** argv)
     //     });
     // scene->addChild(generateMyObject(bat_curve2, options, stateInfo));
     // geomInfo.transform = vsg::translate(vsg::vec3{0.0, 0.0, -7.0});
+    scene->addChild(generateMyFrac(options));
 
     // scene->addChild(generateFlatOcean(builder));
     // scene->addChild(generateBumpyOcean(builder));

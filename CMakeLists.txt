@@ -14,6 +14,7 @@ add_executable(pills src/pills.cpp
     src/GetPipelineConfigForLines.cpp
     src/MyBuilder.cpp
     src/MyObject.cpp
+    src/MyFrac.cpp
     src/DynamicLighting.cpp)
 target_link_libraries(pills vsg::vsg vsgXchange::vsgXchange)
 
