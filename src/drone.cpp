@@ -6,6 +6,7 @@
 #include "DynamicText.h"
 #include "DynamicLighting.h"
 #include "MyBuilder.h"
+#include "MyDrone.h"
 
 #include <iostream>
 #include <sstream>
@@ -70,22 +71,23 @@ int main(int argc, char** argv)
 
     // scene->addChild(generateFlatOcean(builder));
 
-    vsg::GeometryInfo geomInfo;
-    vsg::StateInfo stateInfo;
+    // vsg::GeometryInfo geomInfo;
+    // vsg::StateInfo stateInfo;
 
-    geomInfo.dx = vsg::vec3{0.5, 0.0, 0.0};
-    geomInfo.dy = vsg::vec3{0.0, 1.0, 0.0};
-    geomInfo.dz = vsg::vec3{0.0, 0.0, 1.0};
-    geomInfo.color = vsg::vec4{1.0, 1.0, 1.0, 1.0};
-    geomInfo.transform = vsg::rotate(M_PI/2.0, 0.0, 1.0, 0.0);
-    auto bat = vsg::vec2Array::create({
-        {-1.0, 0.0},
-        {-1.0, 0.5},
-        { 0.0, 0.5},
-        { 0.0, 1.0},
-        { 1.0, 0.0}
-    });
-    scene->addChild(builder->createBat(bat, 50, geomInfo, stateInfo));
+    // geomInfo.dx = vsg::vec3{0.5, 0.0, 0.0};
+    // geomInfo.dy = vsg::vec3{0.0, 1.0, 0.0};
+    // geomInfo.dz = vsg::vec3{0.0, 0.0, 1.0};
+    // geomInfo.color = vsg::vec4{1.0, 1.0, 1.0, 1.0};
+    // geomInfo.transform = vsg::rotate(M_PI/2.0, 0.0, 1.0, 0.0);
+    // auto bat = vsg::vec2Array::create({
+    //     {-1.0, 0.0},
+    //     {-1.0, 0.5},
+    //     { 0.0, 0.5},
+    //     { 0.0, 1.0},
+    //     { 1.0, 0.0}
+    // });
+    // scene->addChild(builder->createBat(bat, 50, geomInfo, stateInfo));
+    scene->addChild(MyDrone::create(builder));
     // scene->addChild(builder->createSphere(geomInfo, stateInfo));
 
     auto litScene = DynamicLighting::create(scene);

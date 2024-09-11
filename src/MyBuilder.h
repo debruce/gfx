@@ -7,7 +7,6 @@ class VSG_DECLSPEC MyBuilder : public vsg::Inherit<vsg::Builder, MyBuilder>
 protected:
     vsg::Builder::GeometryMap _frustums;
     vsg::Builder::GeometryMap _bats;
-    vsg::Builder::GeometryMap _drones;
 public:
     MyBuilder() {}
     MyBuilder(const vsg::Builder& rhs) = delete;
