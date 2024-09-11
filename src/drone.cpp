@@ -1,5 +1,6 @@
 #include <vsg/all.h>
 #include <vsgXchange/all.h>
+#include <cmath>
 #include <tinynurbs/tinynurbs.h>
 
 #include "Demangle.h"
@@ -69,26 +70,11 @@ int main(int argc, char** argv)
     auto lineShader = makeLineShader();
     scene->addChild(makeXYGrid(lineShader, font, options, vsg::vec4{1.0, 1.0, 1.0, 1.0}, 1.5, 10, 1.0, true));
 
-    // scene->addChild(generateFlatOcean(builder));
+    auto drone = MyDrone::create(builder);
+    scene->addChild(drone);
 
-    // vsg::GeometryInfo geomInfo;
-    // vsg::StateInfo stateInfo;
-
-    // geomInfo.dx = vsg::vec3{0.5, 0.0, 0.0};
-    // geomInfo.dy = vsg::vec3{0.0, 1.0, 0.0};
-    // geomInfo.dz = vsg::vec3{0.0, 0.0, 1.0};
-    // geomInfo.color = vsg::vec4{1.0, 1.0, 1.0, 1.0};
-    // geomInfo.transform = vsg::rotate(M_PI/2.0, 0.0, 1.0, 0.0);
-    // auto bat = vsg::vec2Array::create({
-    //     {-1.0, 0.0},
-    //     {-1.0, 0.5},
-    //     { 0.0, 0.5},
-    //     { 0.0, 1.0},
-    //     { 1.0, 0.0}
-    // });
-    // scene->addChild(builder->createBat(bat, 50, geomInfo, stateInfo));
-    scene->addChild(MyDrone::create(builder));
-    // scene->addChild(builder->createSphere(geomInfo, stateInfo));
+    auto ship = MyShip::create(builder);
+    scene->addChild(ship);
 
     auto litScene = DynamicLighting::create(scene);
 
@@ -96,21 +82,13 @@ int main(int argc, char** argv)
     auto viewer = vsg::Viewer::create();
 
     viewer->addWindow(window);
-            // auto p0 = vec3{c0 * r0, s0 * r0, z0};
-            // auto p1 = vec3{c0 * r1, s0 * r1, z1};
-            // auto p2 = vec3{c1 * r0, s1 * r0, z0};
-            // auto p3 = vec3{c1 * r1, s1 * r1, z1};
-    vsg::ref_ptr<vsg::LookAt> lookAt;
 
-    // vsg::dvec3 centre = (bounds.min + bounds.max) * 0.5;
-    // double radius = vsg::length(bounds.max - bounds.min) * 0.6;
-    // cout << "center = " << centre << endl;
-    // cout << "radius = " << radius << endl;
     vsg::dvec3 centre{0.0, 0.0, 0.0};
     double radius = 18.0;
+    auto viewPos = centre + vsg::dvec3{0.0, -5.0, 45.0};
 
     // set up the camera
-    lookAt = vsg::LookAt::create(centre + vsg::dvec3(0.0, -radius * 3.5, 0.0), centre, vsg::dvec3(0.0, 0.0, 1.0));
+    auto lookAt = vsg::LookAt::create(viewPos, centre, vsg::dvec3(0.0, 0.0, 1.0));
 
     double nearFarRatio = 0.001;
     auto perspective = vsg::Perspective::create(30.0, static_cast<double>(window->extent2D().width) / static_cast<double>(window->extent2D().height), nearFarRatio * radius, radius * 10.0);
@@ -140,9 +118,15 @@ int main(int argc, char** argv)
     // rendering main loop
     while (viewer->advanceToNextFrame())
     {
-        auto t = std::chrono::duration<double, std::chrono::seconds::period>(vsg::clock::now() - startTime).count();
-        litScene->setDirectional(1.0, vsg::vec3{cosf(t), sinf(t), 0.0f});
+        // litScene->setDirectional(1.0, vsg::vec3{cosf(t), sinf(t), 0.0f});
         viewer->handleEvents();
+
+        auto t = std::chrono::duration<double, std::chrono::seconds::period>(vsg::clock::now() - startTime).count();
+        double ipart;
+        auto radians = -2.0 * M_PI * modf(t / 30.0, &ipart);
+        drone->setPosition(-5.0 * sin(radians), 5.0 * cos(radians), 5.0, radians - M_PI/2);
+        drone->setView(90.0, -20.0);
+
         viewer->update();
         viewer->recordAndSubmit();
         viewer->present();
