@@ -18,5 +18,15 @@ add_executable(pills src/pills.cpp
     src/DynamicLighting.cpp)
 target_link_libraries(pills vsg::vsg vsgXchange::vsgXchange)
 
+add_executable(drone src/drone.cpp
+    src/LightupScene.cpp
+    src/MakeAxes.cpp
+    src/GetPipelineConfigForLines.cpp
+    src/MyBuilder.cpp
+    src/MyObject.cpp
+    src/MyFrac.cpp
+    src/DynamicLighting.cpp)
+target_link_libraries(drone vsg::vsg vsgXchange::vsgXchange)
+
 add_executable(frac src/frac.cpp)
 target_link_libraries(frac vsg::vsg vsgXchange::vsgXchange)

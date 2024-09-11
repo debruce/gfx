@@ -93,7 +93,9 @@ vsg::ref_ptr<vsg::Node> MyBuilder::createFrustum(const vsg::GeometryInfo& info, 
             n1, n1, n1, n1,
             n2, n2, n2, n2,
             n3, n3, n3, n3,
-            n4, n4, n4, n4,
+            n4, n4, n4, n4,    // auto texcoords = vec2Array::create({
+    //     { 1.0, 0.0 }, { 0.0, -1.0 }, { 0.0, 1.0 }
+    // });
             n5, n5, n5, n5});
 
         texcoords = vec2Array::create(
@@ -143,7 +145,7 @@ static vsg::vec3 calcNorm(const vsg::vec3& o, const vsg::vec3& a, const vsg::vec
 }
 
 
-vsg::ref_ptr<vsg::Node> MyBuilder::createBat(vsg::ref_ptr<vsg::vec2Array> curve, const vsg::GeometryInfo& info, const vsg::StateInfo& stateInfo)
+vsg::ref_ptr<vsg::Node> MyBuilder::createBat(vsg::ref_ptr<vsg::vec2Array> curve, const size_t& square_count, const vsg::GeometryInfo& info, const vsg::StateInfo& stateInfo)
 {
     using namespace vsg;
 
@@ -162,8 +164,6 @@ vsg::ref_ptr<vsg::Node> MyBuilder::createBat(vsg::ref_ptr<vsg::vec2Array> curve,
     auto dz = info.dz;
     auto origin = info.position;
     auto [t_origin, t_scale, t_top] = y_texcoord(stateInfo).value;
-
-    const size_t square_count = 200;
 
     size_t row_count = curve->valueCount() - 1;
 
@@ -194,24 +194,26 @@ vsg::ref_ptr<vsg::Node> MyBuilder::createBat(vsg::ref_ptr<vsg::vec2Array> curve,
         for (size_t i = 0; i < square_count; i++) {
             float percent0 = float(i) / square_count;
             float percent1 = float(i+1) / square_count;
+
             float c0 = cosf(2 * M_PI * percent0);
             float s0 = sinf(2 * M_PI * percent0);
             float c1 = cosf(2 * M_PI * percent1);
             float s1 = sinf(2 * M_PI * percent1);
-            auto p0 = vec3{c0 * r0, s0 * r0, z0};
-            auto p1 = vec3{c0 * r1, s0 * r1, z1};
-            auto p2 = vec3{c1 * r0, s1 * r0, z0};
-            auto p3 = vec3{c1 * r1, s1 * r1, z1};
-            auto norm = calcNorm(p0, p1, p2);
+
+            auto p0 = dx * (c0 * r0) + dy * (s0 * r0) + dz * z0 + origin;
+            auto p1 = dx * (c0 * r1) + dy * (s0 * r1) + dz * z1 + origin;
+            auto p2 = dx * (c1 * r0) + dy * (s1 * r0) + dz * z0 + origin;
+            auto p3 = dx * (c1 * r1) + dy * (s1 * r1) + dz * z1 + origin;
+            auto norm = -calcNorm(p0, p1, p2);
 
             float zCoord0 = (z0 - (*curve)[0].x) * zScale;
             float zCoord1 = (z1 - (*curve)[0].x) * zScale;            
             ndcs[iindex++] = vert;
-            ndcs[iindex++] = vert + 1;
             ndcs[iindex++] = vert + 2;
             ndcs[iindex++] = vert + 1;
+            ndcs[iindex++] = vert + 1;
+            ndcs[iindex++] = vert + 2;
             ndcs[iindex++] = vert + 3;
-            ndcs[iindex++] = vert + 2;
 
             v[vert] = p0;
             n[vert] = norm;
@@ -225,7 +227,7 @@ vsg::ref_ptr<vsg::Node> MyBuilder::createBat(vsg::ref_ptr<vsg::vec2Array> curve,
 
             v[vert] = p2;
             n[vert] = norm;
-            t[vert] = vec2{percent0, zCoord1};
+            t[vert] = vec2{percent0, zCoord1}; 
             vert++;
 
             v[vert] = p3;
@@ -248,7 +250,7 @@ vsg::ref_ptr<vsg::Node> MyBuilder::createBat(vsg::ref_ptr<vsg::vec2Array> curve,
     arrays.push_back(vertices);
     if (normals) arrays.push_back(normals);
     if (texcoords) arrays.push_back(texcoords);
-    // if (colors) arrays.push_back(colors);
+    if (colors) arrays.push_back(colors);
     if (positions) arrays.push_back(positions);
     vid->assignArrays(arrays);
 
@@ -260,3 +262,81 @@ vsg::ref_ptr<vsg::Node> MyBuilder::createBat(vsg::ref_ptr<vsg::vec2Array> curve,
     return subgraph;
     return nullptr;
 }
+
+#if 0
+struct PolyhedronBuilder {
+    size_t current_index;
+    std::vector<vsg::vec3>  vertices;
+    std::vector<vsg::vec3>  normals;
+    std::vector<unsigned short> indices;
+
+    PolyhedronBuilder()
+    {
+        current_index = 0;
+        vertices.reserve(1024);
+        normals.reserve(1024);
+        indices.reserve(1024);
+    }
+
+    vsg::ref_ptr<vsg::vec3Array> getVertices()
+    {
+        auto v = vsg::vec3Array::create(vertices.size());
+        for (size_t i = 0; i < vertices.size(); i++)  v->at(i) = vertices[i];
+        return v;
+    }
+
+    vsg::ref_ptr<vsg::vec3Array> getNormals()
+    {
+        auto n = vsg::vec3Array::create(normals.size());
+        for (size_t i = 0; i < normals.size(); i++)  n->at(i) = normals[i];
+        return n;
+    }
+
+    vsg::ref_ptr<vsg::ushortArray> getIndices()
+    {
+        auto ndc = vsg::ushortArray::create(indices.size());
+        for (size_t i = 0; i < indices.size(); i++)  ndc->at(i) = indices[i];
+        return ndc;
+    }
+
+    void triangle(const vsg::vec3& a, const vsg::vec3& b, const vsg::vec3& c)
+    {
+        indices.push_back(current_index);
+        indices.push_back(current_index+1);
+        indices.push_back(current_index+2);
+        current_index += 3;
+        auto up = calcNorm(a, b, c);
+        vertices.push_back(a);
+        vertices.push_back(b);
+        vertices.push_back(c);
+        normals.push_back(up);
+        normals.push_back(up);
+        normals.push_back(up);        
+    }
+
+    void quad(const vsg::vec3& a, const vsg::vec3& b, const vsg::vec3& c, const vsg::vec3& d, bool flip = false)
+    {
+        indices.push_back(current_index);
+        indices.push_back(current_index+1);
+        indices.push_back(current_index+2);
+
+        indices.push_back(current_index);
+        indices.push_back(current_index+2);
+        indices.push_back(current_index+3);
+        current_index += 6;
+
+        auto up = calcNorm(a, b, c);
+        if (flip) up = -up;
+
+        vertices.push_back(a);
+        vertices.push_back(b);
+        vertices.push_back(c);
+        vertices.push_back(d);
+
+        normals.push_back(up);
+        normals.push_back(up);
+        normals.push_back(up);
+        normals.push_back(up); 
+    }
+};
+#endif
