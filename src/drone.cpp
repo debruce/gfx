@@ -73,29 +73,6 @@ int main(int argc, char** argv)
     auto drone = MyDrone::create(builder);
     scene->addChild(drone);
 
-    vsg::GeometryInfo g;
-    vsg::StateInfo s;
-    auto meshPts = vsg::vec3Array2D::create(3, 5);
-    meshPts->at(0,0) = { -1.0f, -1.0f, 0.0f };
-    meshPts->at(0,1) = { -1.0f, 0.75f, 0.0f };
-    meshPts->at(0,2) = { 0.0f, 1.0f, 0.0f };
-    meshPts->at(0,3) = { 1.0f, 0.75f, 0.0f };
-    meshPts->at(0,4) = { 1.0f, -1.0f, 0.0f };
-
-    meshPts->at(1,0) = { -1.0f, -1.0f, 0.25f };
-    meshPts->at(1,1) = { -1.0f, 0.75f, 0.25f };
-    meshPts->at(1,2) = { 0.0f, 1.0f, 0.25f };
-    meshPts->at(1,3) = { 1.0f, 0.75f, 0.25f };
-    meshPts->at(1,4) = { 1.0f, -1.0f, 0.25f };
-
-    meshPts->at(2,0) = { -0.5f, -0.5f, 0.5f };
-    meshPts->at(2,1) = { -0.5f, 0.5f * 0.75f, 0.5f };
-    meshPts->at(2,2) = { 0.0f, 0.5f, 0.5f };
-    meshPts->at(2,3) = { 0.5f, 0.5f * 0.75f, 0.5f };
-    meshPts->at(2,4) = { 0.5f, -0.5f, 0.5f };
-
-    scene->addChild(builder->createMesh(meshPts, g, s));
-
     auto ship = MyShip::create(builder);
     scene->addChild(ship);
 
@@ -149,6 +126,8 @@ int main(int argc, char** argv)
         auto radians = -2.0 * M_PI * modf(t / 30.0, &ipart);
         drone->setPosition(-5.0 * sin(radians), 5.0 * cos(radians), 5.0, radians - M_PI/2);
         drone->setView(90.0, -20.0);
+
+        ship->setPosition(5.0 * sin(radians), -5.0 * cos(radians), radians - M_PI/2 + M_PI);
 
         viewer->update();
         viewer->recordAndSubmit();

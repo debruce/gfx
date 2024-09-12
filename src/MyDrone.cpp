@@ -64,21 +64,43 @@ void MyDrone::setView(float yaw, float pitch, float roll)
 
 MyShip::MyShip(vsg::ref_ptr<MyBuilder> builder)
 {
-    {
-        vsg::GeometryInfo geomInfo;
-        vsg::StateInfo stateInfo;
+    vsg::GeometryInfo g;
+    vsg::StateInfo s;
+    auto meshPts = vsg::vec3Array2D::create(5, 5);
+    meshPts->at(0,0) = { -0.5f, -1.0f, 0.0f };
+    meshPts->at(0,1) = { -0.5f, 0.75f, 0.0f };
+    meshPts->at(0,2) = { 0.0f, 1.0f, 0.0f };
+    meshPts->at(0,3) = { 0.5f, 0.75f, 0.0f };
+    meshPts->at(0,4) = { 0.5f, -1.0f, 0.0f };
 
-        geomInfo.dx = vsg::vec3{1.0, 0.0, 0.0};
-        geomInfo.dy = vsg::vec3{0.0, 0.5, 0.0};
-        geomInfo.dz = vsg::vec3{0.0, 0.0, .25};
-        geomInfo.position = vsg::vec3{0.0, 0.0, 0.25};
-        // geomInfo.color = vsg::vec4{1.0, 1.0, 1.0, 1.0};
-        // geomInfo.transform = vsg::rotate(-M_PI/2.0, 1.0, 0.0, 0.0);
-        body = builder->createBox(geomInfo, stateInfo);
-        bodyTransform = vsg::MatrixTransform::create();
-        bodyTransform->addChild(body);
-        addChild(bodyTransform);
-    }
+    meshPts->at(1,0) = { -0.5f, -1.0f, 0.25f };
+    meshPts->at(1,1) = { -0.5f, 0.75f, 0.25f };
+    meshPts->at(1,2) = { 0.0f, 1.0f, 0.25f };
+    meshPts->at(1,3) = { 0.5f, 0.75f, 0.25f };
+    meshPts->at(1,4) = {0.5f, -1.0f, 0.25f };
+
+    meshPts->at(2,0) = { -0.25f, -0.5f, 0.25f };
+    meshPts->at(2,1) = { -0.25f, 0.5f * 0.5f, 0.25f };
+    meshPts->at(2,2) = { 0.0f, 0.5f, 0.25f };
+    meshPts->at(2,3) = { 0.25f, 0.5f * 0.5f, 0.25f };
+    meshPts->at(2,4) = { 0.25f, -0.5f, 0.25f };
+
+    meshPts->at(3,0) = { -0.25f, -0.5f, 0.5f };
+    meshPts->at(3,1) = { -0.25f, 0.5f * 0.5f, 0.5f };
+    meshPts->at(3,2) = { 0.0f, 0.5f, 0.5f };
+    meshPts->at(3,3) = { 0.25f, 0.5f * 0.5f, 0.5f };
+    meshPts->at(3,4) = { 0.25f, -0.5f, 0.5f };
+
+    meshPts->at(4,0) = { 0.0f, 0.0f, 0.5f };
+    meshPts->at(4,1) = { 0.0f, 0.0f, 0.5f };
+    meshPts->at(4,2) = { 0.0f, 0.0f, 0.5f };
+    meshPts->at(4,3) = { 0.0f, 0.0f, 0.5f };
+    meshPts->at(4,4) = { 0.0f, 0.0f, 0.5f };
+
+    body = builder->createMesh(meshPts, g, s);
+    bodyTransform = vsg::MatrixTransform::create();
+    bodyTransform->addChild(body);
+    addChild(bodyTransform);
 }
 
 void MyShip::setPosition(double x, double y, double azim)
