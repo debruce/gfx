@@ -73,6 +73,29 @@ int main(int argc, char** argv)
     auto drone = MyDrone::create(builder);
     scene->addChild(drone);
 
+    vsg::GeometryInfo g;
+    vsg::StateInfo s;
+    auto meshPts = vsg::vec3Array2D::create(3, 5);
+    meshPts->at(0,0) = { -1.0f, -1.0f, 0.0f };
+    meshPts->at(0,1) = { -1.0f, 0.75f, 0.0f };
+    meshPts->at(0,2) = { 0.0f, 1.0f, 0.0f };
+    meshPts->at(0,3) = { 1.0f, 0.75f, 0.0f };
+    meshPts->at(0,4) = { 1.0f, -1.0f, 0.0f };
+
+    meshPts->at(1,0) = { -1.0f, -1.0f, 0.25f };
+    meshPts->at(1,1) = { -1.0f, 0.75f, 0.25f };
+    meshPts->at(1,2) = { 0.0f, 1.0f, 0.25f };
+    meshPts->at(1,3) = { 1.0f, 0.75f, 0.25f };
+    meshPts->at(1,4) = { 1.0f, -1.0f, 0.25f };
+
+    meshPts->at(2,0) = { -0.5f, -0.5f, 0.5f };
+    meshPts->at(2,1) = { -0.5f, 0.5f * 0.75f, 0.5f };
+    meshPts->at(2,2) = { 0.0f, 0.5f, 0.5f };
+    meshPts->at(2,3) = { 0.5f, 0.5f * 0.75f, 0.5f };
+    meshPts->at(2,4) = { 0.5f, -0.5f, 0.5f };
+
+    scene->addChild(builder->createMesh(meshPts, g, s));
+
     auto ship = MyShip::create(builder);
     scene->addChild(ship);
 
