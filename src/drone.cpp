@@ -70,10 +70,10 @@ int main(int argc, char** argv)
     auto lineShader = makeLineShader();
     scene->addChild(makeXYGrid(lineShader, font, options, vsg::vec4{1.0, 1.0, 1.0, 1.0}, 1.5, 10, 1.0, true));
 
-    auto drone = MyDrone::create(builder);
+    auto drone = MyDrone::create(builder, .3333);
     scene->addChild(drone);
 
-    auto ship = MyShip::create(builder);
+    auto ship = MyShip::create(builder, .3333);
     scene->addChild(ship);
 
     auto litScene = DynamicLighting::create(scene);
@@ -113,7 +113,7 @@ int main(int argc, char** argv)
     viewer->compile(resourceHints);
 
     auto startTime = vsg::clock::now();
-    double numFramesCompleted = 0.0;
+    size_t numFramesCompleted = 0;
 
     // rendering main loop
     while (viewer->advanceToNextFrame())
@@ -125,20 +125,28 @@ int main(int argc, char** argv)
         double ipart;
         auto radians = -2.0 * M_PI * modf(t / 30.0, &ipart);
         drone->setPosition(-5.0 * sin(radians), 5.0 * cos(radians), 5.0, radians - M_PI/2);
-        drone->setView(90.0, -20.0);
+        drone->setView(90.0, -45.0);
 
+        if (numFramesCompleted % 120 == 1) {
+            cout << "center = " << drone->getIntercept() << endl;
+
+            cout << "upper left = " << drone->getIntercept(vsg::dvec3{-.1, .1, 1.0}) << endl;
+            cout << "upper right = " << drone->getIntercept(vsg::dvec3{.1, .1, 1.0}) << endl;
+            cout << "lower left = " << drone->getIntercept(vsg::dvec3{-.1, -.1, 1.0}) << endl;
+            cout << "lower right = " << drone->getIntercept(vsg::dvec3{.1, -.1, 1.0}) << endl << endl;
+        }
         ship->setPosition(5.0 * sin(radians), -5.0 * cos(radians), radians - M_PI/2 + M_PI);
 
         viewer->update();
         viewer->recordAndSubmit();
         viewer->present();
-        numFramesCompleted += 1.0;
+        numFramesCompleted++;
     }
 
     auto duration = std::chrono::duration<double, std::chrono::seconds::period>(vsg::clock::now() - startTime).count();
     if (numFramesCompleted > 0.0)
     {
-        std::cout << "Average frame rate = " << (numFramesCompleted / duration) << std::endl;
+        std::cout << "Average frame rate = " << (double(numFramesCompleted) / duration) << std::endl;
     }
 
     return 0;

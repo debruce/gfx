@@ -7,7 +7,7 @@ static vsg::vec3 calcNorm(const vsg::vec3& o, const vsg::vec3& a, const vsg::vec
 }
 
 
-vsg::ref_ptr<vsg::Node> MyBuilder::createLathe(vsg::ref_ptr<vsg::vec2Array> curve, const size_t& square_count, const vsg::GeometryInfo& info, const vsg::StateInfo& stateInfo)
+vsg::ref_ptr<vsg::Node> MyBuilder::createLathe(vsg::ref_ptr<vsg::vec2Array> curve, const size_t& square_count, const vsg::GeometryInfo& info, const vsg::StateInfo& stateInfo, const double& phase)
 {
     using namespace vsg;
 
@@ -57,10 +57,10 @@ vsg::ref_ptr<vsg::Node> MyBuilder::createLathe(vsg::ref_ptr<vsg::vec2Array> curv
             float percent0 = float(i) / square_count;
             float percent1 = float(i+1) / square_count;
 
-            float c0 = cosf(2 * M_PI * percent0);
-            float s0 = sinf(2 * M_PI * percent0);
-            float c1 = cosf(2 * M_PI * percent1);
-            float s1 = sinf(2 * M_PI * percent1);
+            float c0 = cosf(2 * M_PI * percent0 + phase);
+            float s0 = sinf(2 * M_PI * percent0 + phase);
+            float c1 = cosf(2 * M_PI * percent1 + phase);
+            float s1 = sinf(2 * M_PI * percent1 + phase);
 
             auto p0 = dx * (c0 * r0) + dy * (s0 * r0) + dz * z0 + origin;
             auto p1 = dx * (c0 * r1) + dy * (s0 * r1) + dz * z1 + origin;
