@@ -66,10 +66,10 @@ MyObject::MyObject(vsg::ref_ptr<const vsg::Options> options, vsg::ref_ptr<vsg::v
 
 void MyObject::update(vsg::ref_ptr<vsg::vec3Array2D> mesh)
 {
-    auto new_mesh = generate(mesh);
-    stateGroup->removeObject(vid);
-    vid = new_mesh = vid;
-    stateGroup->addChild(vid);
+//     auto new_mesh = generate(mesh);
+//     stateGroup->removeObject(vid);
+//     vid = new_mesh = vid;
+//     stateGroup->addChild(vid);
 }
 
 vsg::ref_ptr<vsg::VertexIndexDraw> MyObject::generate(vsg::ref_ptr<vsg::vec3Array2D> mesh)
