@@ -8,6 +8,7 @@
 #include "DynamicLighting.h"
 #include "MyBuilder.h"
 #include "MyDrone.h"
+#include "MyObject.h"
 
 #include <iostream>
 #include <sstream>
@@ -75,6 +76,24 @@ int main(int argc, char** argv)
 
     auto ship = MyShip::create(builder, .3333);
     scene->addChild(ship);
+
+    auto meshPts = vsg::vec3Array2D::create(2, 6);
+    meshPts->at(0,0) = { -0.5f, -1.0f, 1.0f };
+    meshPts->at(0,1) = { -0.5f, 0.75f, 1.0f };
+    meshPts->at(0,2) = { 0.0f, 1.0f, 1.0f };
+    meshPts->at(0,3) = { 0.5f, 0.75f, 1.0f };
+    meshPts->at(0,4) = { 0.5f, -1.0f, 1.0f };
+    meshPts->at(0,5) = { -0.5f, -1.0f, 1.0f };
+
+    meshPts->at(1,0) = { -0.5f, -1.0f, 2.0f };
+    meshPts->at(1,1) = { -0.5f, 0.75f, 2.0f };
+    meshPts->at(1,2) = { 0.0f, 1.0f, 2.0f };
+    meshPts->at(1,3) = { 0.5f, 0.75f, 2.0f };
+    meshPts->at(1,4) = {0.5f, -1.0f, 2.0f };
+    meshPts->at(1,5) = { -0.5f, -1.0f, 2.0f };
+
+    auto mo = MyObject::create(options, meshPts);
+    scene->addChild(mo);
 
     auto litScene = DynamicLighting::create(scene);
 
