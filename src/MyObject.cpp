@@ -41,9 +41,42 @@ static vsg::vec3 calcNorm(const vsg::vec3& o, const vsg::vec3& a, const vsg::vec
     return vsg::normalize(vsg::cross(a - o, b - o));
 }
 
-static vsg::ref_ptr<vsg::VertexIndexDraw> makeVID(vsg::ref_ptr<vsg::vec3Array2D> mesh)
+MyObject::MyObject(vsg::ref_ptr<const vsg::Options> options, vsg::ref_ptr<vsg::vec3Array2D> mesh)
 {
     using namespace vsg;
+
+    if (!_phongShaderSet) _phongShaderSet = createPhongShaderSet(options);
+    
+    vid = generate(mesh);
+
+    auto gpConf = vsg::GraphicsPipelineConfigurator::create(_phongShaderSet);
+
+    stateGroup = vsg::StateGroup::create();
+
+    vsg::StateInfo si;
+    SetMyPipelineStates sps(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, si);
+    gpConf->accept(sps);
+    gpConf->init();
+    gpConf->copyTo(stateGroup);
+
+    stateGroup->addChild(vid);
+
+    addChild(stateGroup);
+}
+
+void MyObject::update(vsg::ref_ptr<vsg::vec3Array2D> mesh)
+{
+    auto new_mesh = generate(mesh);
+    stateGroup->removeObject(vid);
+    vid = new_mesh = vid;
+    stateGroup->addChild(vid);
+}
+
+vsg::ref_ptr<vsg::VertexIndexDraw> MyObject::generate(vsg::ref_ptr<vsg::vec3Array2D> mesh)
+{
+    using namespace vsg;
+
+    auto vid = VertexIndexDraw::create();
 
     auto vertices = vec3Array::create(4 * mesh->width() * mesh->height());
     auto& v = *vertices;
@@ -97,8 +130,6 @@ static vsg::ref_ptr<vsg::VertexIndexDraw> makeVID(vsg::ref_ptr<vsg::vec3Array2D>
         }
     }
 
-    auto vid = VertexIndexDraw::create();
-
     DataList arrays;
     arrays.push_back(vertices);
     arrays.push_back(normals);
@@ -110,28 +141,5 @@ static vsg::ref_ptr<vsg::VertexIndexDraw> makeVID(vsg::ref_ptr<vsg::vec3Array2D>
     vid->assignIndices(indices);
     vid->indexCount = static_cast<uint32_t>(indices->size());
     vid->instanceCount = 1;
-
     return vid;
-}
-
-MyObject::MyObject(vsg::ref_ptr<const vsg::Options> options, vsg::ref_ptr<vsg::vec3Array2D> mesh)
-{
-    using namespace vsg;
-
-    if (!_phongShaderSet) _phongShaderSet = createPhongShaderSet(options);
-    
-    auto vid = makeVID(mesh);
-
-    auto gpConf = vsg::GraphicsPipelineConfigurator::create(_phongShaderSet);
-
-    auto stateGroup = vsg::StateGroup::create();
-    vsg::StateInfo si;
-    SetMyPipelineStates sps(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, si);
-    gpConf->accept(sps);
-    gpConf->init();
-    gpConf->copyTo(stateGroup);
-
-    stateGroup->addChild(vid);
-
-    addChild(stateGroup);
 }

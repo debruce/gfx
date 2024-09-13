@@ -93,6 +93,7 @@ int main(int argc, char** argv)
     meshPts->at(1,5) = { -0.5f, -1.0f, 2.0f };
 
     auto mo = MyObject::create(options, meshPts);
+
     scene->addChild(mo);
 
     auto litScene = DynamicLighting::create(scene);
@@ -139,12 +140,30 @@ int main(int argc, char** argv)
     {
         // litScene->setDirectional(1.0, vsg::vec3{cosf(t), sinf(t), 0.0f});
         viewer->handleEvents();
+        viewer->update();
 
         auto t = std::chrono::duration<double, std::chrono::seconds::period>(vsg::clock::now() - startTime).count();
         double ipart;
         auto radians = -2.0 * M_PI * modf(t / 30.0, &ipart);
         drone->setPosition(-5.0 * sin(radians), 5.0 * cos(radians), 5.0, radians - M_PI/2);
         drone->setView(90.0, -45.0);
+
+        if (numFramesCompleted > 300) {
+            auto meshPts = vsg::vec3Array2D::create(2, 5);
+            meshPts->at(0,0) = { -0.5f, -1.0f, 1.0f };
+            meshPts->at(0,1) = { -0.5f, 0.75f, 1.0f };
+            meshPts->at(0,2) = { 0.5f, 0.75f, 1.0f };
+            meshPts->at(0,3) = { 0.5f, -1.0f, 1.0f };
+            meshPts->at(0,4) = { -0.5f, -1.0f, 1.0f };
+
+            meshPts->at(1,0) = { -0.5f, -1.0f, 2.0f };
+            meshPts->at(1,1) = { -0.5f, 0.75f, 2.0f };
+            meshPts->at(1,2) = { 0.5f, 0.75f, 2.0f };
+            meshPts->at(1,3) = {0.5f, -1.0f, 2.0f };
+            meshPts->at(1,4) = { -0.5f, -1.0f, 2.0f };
+
+            mo->update(meshPts);
+        }
 
         if (numFramesCompleted % 120 == 1) {
             cout << "center = " << drone->getIntercept() << endl;
@@ -156,7 +175,6 @@ int main(int argc, char** argv)
         }
         ship->setPosition(5.0 * sin(radians), -5.0 * cos(radians), radians - M_PI/2 + M_PI);
 
-        viewer->update();
         viewer->recordAndSubmit();
         viewer->present();
         numFramesCompleted++;
