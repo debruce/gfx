@@ -9,6 +9,7 @@
 #include "MyBuilder.h"
 #include "MyDrone.h"
 #include "MyObject.h"
+#include "MyQuad.h"
 
 #include <iostream>
 #include <sstream>
@@ -77,22 +78,12 @@ int main(int argc, char** argv)
     auto ship = MyShip::create(builder, .3333);
     scene->addChild(ship);
 
-    auto meshPts = vsg::vec3Array2D::create(2, 6);
-    meshPts->at(0,0) = { -0.5f, -1.0f, 1.0f };
-    meshPts->at(0,1) = { -0.5f, 0.75f, 1.0f };
-    meshPts->at(0,2) = { 0.0f, 1.0f, 1.0f };
-    meshPts->at(0,3) = { 0.5f, 0.75f, 1.0f };
-    meshPts->at(0,4) = { 0.5f, -1.0f, 1.0f };
-    meshPts->at(0,5) = { -0.5f, -1.0f, 1.0f };
-
-    meshPts->at(1,0) = { -0.5f, -1.0f, 2.0f };
-    meshPts->at(1,1) = { -0.5f, 0.75f, 2.0f };
-    meshPts->at(1,2) = { 0.0f, 1.0f, 2.0f };
-    meshPts->at(1,3) = { 0.5f, 0.75f, 2.0f };
-    meshPts->at(1,4) = {0.5f, -1.0f, 2.0f };
-    meshPts->at(1,5) = { -0.5f, -1.0f, 2.0f };
-
-    auto mo = MyObject::create(options, meshPts);
+    auto mo = MyQuad::create(options,
+        vsg::vec3{-1.0, -1.0, 3.0},
+        vsg::vec3{1.0, -1.0, 3.0},
+        vsg::vec3{1.0, 1.0, 3.0},
+        vsg::vec3{-1.0, 1.0, 3.0}
+    );
 
     scene->addChild(mo);
 
@@ -148,31 +139,28 @@ int main(int argc, char** argv)
         drone->setPosition(-5.0 * sin(radians), 5.0 * cos(radians), 5.0, radians - M_PI/2);
         drone->setView(90.0, -45.0);
 
-        if (numFramesCompleted > 300) {
-            auto meshPts = vsg::vec3Array2D::create(2, 5);
-            meshPts->at(0,0) = { -0.5f, -1.0f, 1.0f };
-            meshPts->at(0,1) = { -0.5f, 0.75f, 1.0f };
-            meshPts->at(0,2) = { 0.5f, 0.75f, 1.0f };
-            meshPts->at(0,3) = { 0.5f, -1.0f, 1.0f };
-            meshPts->at(0,4) = { -0.5f, -1.0f, 1.0f };
+        mo->update(
+            drone->getIntercept(vsg::dvec3{-1.5, -1.5, 10.0}),
+            drone->getIntercept(vsg::dvec3{ 1.5, -1.5, 10.0}),
+            drone->getIntercept(vsg::dvec3{ 1.5,  1.5, 10.0}),
+            drone->getIntercept(vsg::dvec3{-1.5,  1.5, 10.0})
+        );
+        // if (numFramesCompleted > 300) {
+        //     mo->update(
+        //         vsg::vec3{-1.0, -1.0, 3.0},
+        //         vsg::vec3{1.0, -1.0, 3.0},
+        //         vsg::vec3{2.0, 2.0, 3.0},
+        //         vsg::vec3{-1.0, 1.0, 3.0});
+        // }
 
-            meshPts->at(1,0) = { -0.5f, -1.0f, 2.0f };
-            meshPts->at(1,1) = { -0.5f, 0.75f, 2.0f };
-            meshPts->at(1,2) = { 0.5f, 0.75f, 2.0f };
-            meshPts->at(1,3) = {0.5f, -1.0f, 2.0f };
-            meshPts->at(1,4) = { -0.5f, -1.0f, 2.0f };
+        // if (numFramesCompleted % 120 == 1) {
+        //     cout << "center = " << drone->getIntercept() << endl;
 
-            mo->update(meshPts);
-        }
-
-        if (numFramesCompleted % 120 == 1) {
-            cout << "center = " << drone->getIntercept() << endl;
-
-            cout << "upper left = " << drone->getIntercept(vsg::dvec3{-.1, .1, 1.0}) << endl;
-            cout << "upper right = " << drone->getIntercept(vsg::dvec3{.1, .1, 1.0}) << endl;
-            cout << "lower left = " << drone->getIntercept(vsg::dvec3{-.1, -.1, 1.0}) << endl;
-            cout << "lower right = " << drone->getIntercept(vsg::dvec3{.1, -.1, 1.0}) << endl << endl;
-        }
+        //     cout << "upper left = " << drone->getIntercept(vsg::dvec3{-.1, .1, 1.0}) << endl;
+        //     cout << "upper right = " << drone->getIntercept(vsg::dvec3{.1, .1, 1.0}) << endl;
+        //     cout << "lower left = " << drone->getIntercept(vsg::dvec3{-.1, -.1, 1.0}) << endl;
+        //     cout << "lower right = " << drone->getIntercept(vsg::dvec3{.1, -.1, 1.0}) << endl << endl;
+        // }
         ship->setPosition(5.0 * sin(radians), -5.0 * cos(radians), radians - M_PI/2 + M_PI);
 
         viewer->recordAndSubmit();

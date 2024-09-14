@@ -42,8 +42,8 @@ MyDrone::MyDrone(vsg::ref_ptr<MyBuilder> builder, double sz)
         auto bat = vsg::vec2Array::create({
             { 1.0, 0.0 },
             { 1.0, 0.1 },
-            { 5.0, 0.5 },
-            { 5.0, 0.0 }
+            { 10.0, 1.5 },
+            { 10.0, 0.0 }
         });
         frustum = builder->createLathe(bat, 4, geomInfo, stateInfo, M_PI/4.0);
         frustumTransform = vsg::MatrixTransform::create();

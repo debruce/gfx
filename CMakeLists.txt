@@ -25,6 +25,7 @@ add_executable(drone src/drone.cpp
     src/MyBuilder.cpp
     src/MyDrone.cpp
     src/MyObject.cpp
+    src/MyQuad.cpp
     src/DynamicLighting.cpp)
 target_link_libraries(drone vsg::vsg vsgXchange::vsgXchange)
 
