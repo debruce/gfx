@@ -30,13 +30,29 @@ layout(location = 0) in vec2 out_texcoord;
 layout(location = 0) out vec4 color;
 layout(set = 0, binding = 0) uniform sampler2D texSampler;
 
+layout(set = 0, binding = 1) uniform ProjectiveParams 
+{
+    mat4 inverseProjection;
+    mat4 inverseModelView;
+}; 
+
 void main()
 {
-    color = texture(texSampler, out_texcoord);
+    vec4 lookupCoord = (inverseProjection * inverseModelView) * vec4(out_texcoord.xy, 0.0, 1.0);
+    color = texture(texSampler, lookupCoord.xy / lookupCoord.w);
+    // color = texture(texSampler, out_texcoord);
     // color = vec4(1.0, 0.0, 0.0, 1.0);
 }
 
 )"};
+
+struct ProjectiveUniform
+{
+    vsg::mat4 inverseProjection;
+    vsg::mat4 inverseModelView;
+};
+
+using ProjectiveUniformValue = vsg::Value<ProjectiveUniform>;
 
 struct SetMyPipelineStates : public vsg::Visitor    // auto indices = ushortArray::create({0, 1, 2, 3, 0});
 
@@ -91,7 +107,8 @@ const vsg::vec3& b, const vsg::vec3& c, const vsg::vec3& d)
         vsg::DepthStencilState::create()};
 
     vsg::DescriptorSetLayoutBindings descriptorBindings{
-        {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr} // { binding, descriptorType, descriptorCount, stageFlags, pImmutableSamplers}
+        {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
+        {1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr},
     };
 
     auto descriptorSetLayout = vsg::DescriptorSetLayout::create(descriptorBindings);
@@ -134,7 +151,14 @@ const vsg::vec3& b, const vsg::vec3& c, const vsg::vec3& d)
     sampler->addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 
     auto texture = vsg::DescriptorImage::create(sampler, image, 0, 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-    auto descriptorSet = vsg::DescriptorSet::create(descriptorSetLayout, vsg::Descriptors{texture});
+
+    auto projectiveUniform = ProjectiveUniformValue::create();
+    projectiveUniform->properties.dataVariance = vsg::DataVariance::DYNAMIC_DATA;
+    projectiveUniform->value().inverseProjection = vsg::mat4();
+    projectiveUniform->value().inverseModelView = vsg::scale(vsg::vec3{.25, .25, .25});
+    auto projectiveUniformDescriptor = vsg::DescriptorBuffer::create(projectiveUniform, 1, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+
+    auto descriptorSet = vsg::DescriptorSet::create(descriptorSetLayout, vsg::Descriptors{texture, projectiveUniformDescriptor});
     auto bindDescriptorSet = vsg::BindDescriptorSet::create(VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->layout, 0, descriptorSet);
 
     stateGroup = vsg::StateGroup::create();
