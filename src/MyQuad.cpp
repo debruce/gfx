@@ -133,15 +133,15 @@ const vsg::vec3& b, const vsg::vec3& c, const vsg::vec3& d)
     sampler->addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
     sampler->addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 
-    auto descriptorImage = vsg::DescriptorImage::create(sampler, image, 0, 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-    auto descriptorSet = vsg::DescriptorSet::create(descriptorSetLayout, vsg::Descriptors{descriptorImage});
+    auto texture = vsg::DescriptorImage::create(sampler, image, 0, 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+    auto descriptorSet = vsg::DescriptorSet::create(descriptorSetLayout, vsg::Descriptors{texture});
     auto bindDescriptorSet = vsg::BindDescriptorSet::create(VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->layout, 0, descriptorSet);
 
     stateGroup = vsg::StateGroup::create();
 
     stateGroup->addChild(bindGraphicsPipeline);
-    stateGroup->addChild(vid);
     stateGroup->addChild(bindDescriptorSet);
+    stateGroup->addChild(vid);
 
     addChild(stateGroup);
 }
