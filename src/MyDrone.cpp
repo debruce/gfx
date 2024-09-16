@@ -72,7 +72,7 @@ vsg::dvec3 MyDrone::getIntercept(const vsg::dvec3& frustumPt)
     auto t0 = frustumTransform->matrix * vsg::t_vec3<double>{0.0, 0.0, 0.0};
     auto t1 = frustumTransform->matrix * frustumPt;
     auto diff = t1 - t0;
-    auto t = -t0[2] / diff[2];
+    auto t = -t0.z / diff.z;
     return t0 + diff * t;
 }
 
