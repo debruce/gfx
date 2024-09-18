@@ -30,7 +30,7 @@ vsg::ref_ptr<vsg::Group> makeAxes(vsg::ref_ptr<vsg::Builder> builder)
     xStovePipe->matrix = vsg::rotate(vsg::radians(90.0f), 0.0f, 1.0f, 0.0f);
 
     auto yStovePipe = makeStovePipe(builder, vsg::vec4{0.0f, 1.0f, 0.0f, 1.0f});
-    yStovePipe->matrix = vsg::rotate(vsg::radians(90.0f), 1.0f, 0.0f, 0.0f);
+    yStovePipe->matrix = vsg::rotate(vsg::radians(-90.0f), 1.0f, 0.0f, 0.0f);
 
     auto axes = vsg::Group::create();
     axes->addChild(zStovePipe);
