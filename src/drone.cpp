@@ -134,7 +134,22 @@ int main(int argc, char** argv)
     auto startTime = vsg::clock::now();
     size_t numFramesCompleted = 0;
 
-    drone->setView(90.0, -45.0);
+    drone->setView(0.0, 0.0);
+    // {
+    //     using namespace std;
+    //     cout << drone->proj->transform() << endl << endl;
+    //     auto m = vsg::inverse(drone->proj->transform());
+    //     cout <<  "-1,-1,0=" << m * vsg::dvec3{-1,-1,0} << endl;
+    //     cout <<  "+1,-1,0=" << m * vsg::dvec3{+1,-1,0} << endl;
+    //     cout <<  "-1,+1,0=" << m * vsg::dvec3{-1,+1,0} << endl;
+    //     cout <<  "+1,+1,0=" << m * vsg::dvec3{+1,+1,0} << endl << endl;
+
+    //     cout <<  "-1,-1,+1=" << m * vsg::dvec3{-1,-1,+1} << endl;
+    //     cout <<  "+1,-1,+1=" << m * vsg::dvec3{+1,-1,+1} << endl;
+    //     cout <<  "-1,+1,+1=" << m * vsg::dvec3{-1,+1,+1} << endl;
+    //     cout <<  "+1,+1,+1=" << m * vsg::dvec3{+1,+1,+1} << endl << endl;
+    // }
+    // exit(0);
 
     // rendering main loop
     while (viewer->advanceToNextFrame())
@@ -146,7 +161,8 @@ int main(int argc, char** argv)
         auto t = std::chrono::duration<double, std::chrono::seconds::period>(vsg::clock::now() - startTime).count();
         double ipart;
         auto radians = -2.0 * M_PI * modf(t / 100.0, &ipart);
-        drone->setPosition(-5.0 * sin(radians), 5.0 * cos(radians), 5.0, radians + M_PI/2);
+        radians = 0.0;
+        drone->setPosition(-5.0 * sin(radians), 5.0 * cos(radians), 3.0, radians + M_PI/2);
 
 
         // mo->update(
@@ -163,14 +179,24 @@ int main(int argc, char** argv)
         //         vsg::vec3{-1.0, 1.0, 3.0});
         // }
 
-        // if (numFramesCompleted % 120 == 1) {
-        //     cout << "center = " << drone->getIntercept() << endl;
-
-        //     cout << "upper left = " << drone->getIntercept(vsg::dvec3{-.1, .1, 1.0}) << endl;
-        //     cout << "upper right = " << drone->getIntercept(vsg::dvec3{.1, .1, 1.0}) << endl;
-        //     cout << "lower left = " << drone->getIntercept(vsg::dvec3{-.1, -.1, 1.0}) << endl;
-        //     cout << "lower right = " << drone->getIntercept(vsg::dvec3{.1, -.1, 1.0}) << endl << endl;
-        // }
+        if (numFramesCompleted % 120 == 1) {
+            cout << "points" << endl;
+            double z = 20.0;
+            // drone->getIntercept(vsg::dvec3{0.0, 0.0, z});
+            auto results = drone->getGroundCorners();
+            cout << "lower left = " << results[0] << endl;
+            cout << "lower right = " << results[1] << endl;
+            cout << "upper left = " << results[2] << endl;
+            cout << "upper right = " << results[3] << endl;
+            // drone->getIntercept(vsg::dvec3{1.0, -1.0, z});
+            // drone->getIntercept(vsg::dvec3{-1.0, 1.0, z});
+            // drone->getIntercept(vsg::dvec3{1.0, 1.0, z});
+            // cout << "center = " << drone->getIntercept() << endl;
+            // cout << "lower left = " << drone->getIntercept(vsg::dvec3{0.0, 0.0, 1.0}) << endl;
+            // cout << "lower right = " << drone->getIntercept(vsg::dvec3{1.0, 0.0, 1.0}) << endl;
+            // cout << "upper left = " << drone->getIntercept(vsg::dvec3{0.0, 1.0, 1.0}) << endl;
+            // cout << "upper right = " << drone->getIntercept(vsg::dvec3{1.0, 1.0, 1.0}) << endl << endl;
+        }
         ship->setPosition(5.0 * sin(radians), -5.0 * cos(radians), radians - M_PI/2 + M_PI);
 
         viewer->recordAndSubmit();

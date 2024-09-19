@@ -36,15 +36,17 @@ public:
 };
 
 class MyDrone : public vsg::Inherit<vsg::StateGroup, MyDrone> {
+public:
     vsg::ref_ptr<vsg::Node> body;
     vsg::ref_ptr<LookAtTransform> forwardView;
     vsg::ref_ptr<vsg::Node> frustum;
     vsg::ref_ptr<RelativeViewTransform> cameraView;
-public:
+    vsg::ref_ptr<vsg::Perspective> proj;
+// public:
     MyDrone(vsg::ref_ptr<MyBuilder> builder, double sz = 1.0);
     void setPosition(double x, double y, double alt, double azim);
     void setView(double yaw, double pitch, double roll = 0.0f);
-    vsg::dvec3 getIntercept(const vsg::dvec3& frustumPt = vsg::dvec3{0.0, 0.0, 1.0});
+    std::array<vsg::dvec3, 4> getGroundCorners();
 };
 
 

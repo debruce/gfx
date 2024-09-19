@@ -51,6 +51,7 @@ MyDrone::MyDrone(vsg::ref_ptr<MyBuilder> builder, double sz)
         cameraView = RelativeViewTransform::create(forwardView->lookAt);
         cameraView->addChild(frustum);
         addChild(cameraView);
+        proj = vsg::Perspective::create(1.0, 1.5, .1, 20.0);
     }
 }
 
@@ -67,14 +68,52 @@ void MyDrone::setView(double yaw, double pitch, double roll)
         * vsg::rotate(roll*M_PI/180, 0.0, 1.0, 0.0);
 }
 
-vsg::dvec3 MyDrone::getIntercept(const vsg::dvec3& frustumPt)
+std::array<vsg::dvec2, 4> simpleCorners = {
+    vsg::dvec2{-1,-1},  // lower left
+    vsg::dvec2{+1,-1},  // lower right
+    vsg::dvec2{-1,+1},  // upper left
+    vsg::dvec2{+1,+1}   // upper right
+};
+
+std::array<vsg::dvec3,4> MyDrone::getGroundCorners()
 {
-    // auto t0 = frustumTransform->matrix * vsg::t_vec3<double>{0.0, 0.0, 0.0};
-    // auto t1 = frustumTransform->matrix * frustumPt;
-    // auto diff = t1 - t0;
-    // auto t = -t0.z / diff.z;
-    // return t0 + diff * t;
-    return vsg::dvec3();
+    using namespace std;
+    std::array<vsg::dvec3,4> results;
+    auto pinv = vsg::inverse(proj->transform());
+    auto m = cameraView->transform();
+    cout << "m = " << m << endl;
+    // auto m = vsg::inverse(proj->transform());
+    for (auto i = 0; i < results.size(); i++) {
+        auto pt0 = pinv * vsg::dvec3{simpleCorners[i].x, simpleCorners[i].y, 1.0};
+        auto t0 = m * vsg::dvec4{-pt0.z, pt0.y, pt0.x, 1.0};
+        auto pt1 = pinv * vsg::dvec3{simpleCorners[i].x, simpleCorners[i].y, .0};
+        auto t1 = m * vsg::dvec4{-pt1.z, pt1.y, pt1.x, 1.0};
+        auto diff = t1 - t0;
+        auto t = -t0.z / diff.z;
+        auto out = t0 + diff * t;
+        cout << i << ": "
+            // << " pt0=" << pt0
+            << " t0=" << t0
+            // << " pt1=" << pt1
+            << " t1=" << t1
+            << " diff=" << diff
+            << " t=" << t
+            << endl;
+        results[i] = vsg::dvec3{out.x, out.y, out.z};    
+    }
+    // // auto inv = vsg::inverse(proj->transform() * cameraView->transform());
+    // cout << "proj=" << proj->transform() << endl;
+    // auto inv = vsg::inverse(proj->transform());
+    // auto pt = inv * frustumPt;
+    // // cout << "inv = " << inv << endl;
+    // cout << "mapped = " << pt << endl;
+    // // cout << "projected = " << pt << endl;
+    // // auto t0 = frustumTransform->matrix * vsg::t_vec3<double>{0.0, 0.0, 0.0};
+    // // auto t1 = frustumTransform->matrix * frustumPt;
+    // // auto diff = t1 - t0;
+    // // auto t = -t0.z / diff.z;
+    // // return t0 + diff * t;
+    return results;
 }
 
 MyShip::MyShip(vsg::ref_ptr<MyBuilder> builder, double sz)
