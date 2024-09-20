@@ -52,7 +52,7 @@ void main()
 
 using namespace std;
 
-MyFrustum::MyFrustum(vsg::ref_ptr<vsg::Perspective> proj, const double& sz) : proj(proj)
+MyFrustum::MyFrustum(vsg::ref_ptr<vsg::Perspective> proj, const std::string& orientation) : proj(proj)
 {
     using namespace vsg;
 
@@ -106,17 +106,23 @@ MyFrustum::MyFrustum(vsg::ref_ptr<vsg::Perspective> proj, const double& sz) : pr
         {-1.0, +1.0, 0.0 },
         {+1.0, +1.0, 0.0 },
 
-        {-1.0, -1.0, 0.0625 },
-        {+1.0, -1.0, 0.0625 },
-        {-1.0, +1.0, 0.0625 },
-        {+1.0, +1.0, 0.0625 },
+        { 0.0, +0.75, 1.0 }, // small up arrow tip
+        { 0.0, -0.75, 1.0 }, // small up arrow center
+        {-0.5,  0.0,  1.0 }, // small up arrow left
+        {+0.5,  0.0,  1.0 }, // small up arrow right
+
+        { 0.0, +0.75, 0.0 }, // large up arrow tip
+        { 0.0, -0.75, 0.0 }, // large up arrow center
+        {-0.5,  0.0,  0.0 }, // large up arrow left
+        {+0.5,  0.0,  0.0 }, // large up arrow right
     });
 
     auto indices = ushortArray::create({
         0, 4, 1, 5, 2, 6, 3, 7, // risers
         0, 1, 0, 2, 2, 3, 1, 3, // small end rect
         4, 5, 4, 6, 6, 7, 5, 7, // large end rect
-        8, 9, 8, 10, 10, 11, 9, 11, 
+        9, 8, 10, 8, 11, 8,     // small up arrow
+        13, 12, 14, 12, 15, 12, // large up arrow
     });
 
     DataList arrays;
@@ -139,9 +145,24 @@ MyFrustum::MyFrustum(vsg::ref_ptr<vsg::Perspective> proj, const double& sz) : pr
     auto descriptorSet = DescriptorSet::create(descriptorSetLayout, Descriptors{frustumParamsDescriptor});
     auto bindDescriptorSet = BindDescriptorSet::create(VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline->layout, 0, descriptorSet);
 
-    addChild(bindGraphicsPipeline);
-    addChild(bindDescriptorSet);
-    addChild(vid);
+    auto stateGroup = StateGroup::create();
+    stateGroup->addChild(bindGraphicsPipeline);
+    stateGroup->addChild(bindDescriptorSet);
+    stateGroup->addChild(vid);
+
+    addChild(stateGroup);
+    if (orientation == "lookTowardPosY") {
+        matrix = rotate(M_PI/2, vsg::dvec3{1.0, 0.0, 0.0}) * rotate(M_PI, vsg::dvec3{0.0, 0.0, 1.0});
+    }
+    if (orientation == "lookTowardNegY") {
+        matrix = rotate(-M_PI/2, vsg::dvec3{1.0, 0.0, 0.0});
+    }
+    else if (orientation == "lookTowardPosX") {
+        matrix = rotate(-M_PI/2, vsg::dvec3{0.0, 1.0, 0.0}) * rotate(M_PI/2, vsg::dvec3{0.0, 0.0, 1.0});
+    }
+    else if (orientation == "lookTowardNegX") {
+        matrix = rotate(M_PI/2, vsg::dvec3{0.0, 1.0, 0.0}) * rotate(-M_PI/2, vsg::dvec3{0.0, 0.0, 1.0});
+    }
 }
 
 // void MyQuad::update(const vsg::dvec3& a, const vsg::dvec3& b, const vsg::dvec3& c, const vsg::dvec3& d)

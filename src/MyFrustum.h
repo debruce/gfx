@@ -2,9 +2,10 @@
 
 #include <vsg/all.h>
 
-class MyFrustum : public vsg::Inherit<vsg::StateGroup, MyFrustum> {
-    vsg::ref_ptr<vsg::Perspective> proj;
+class MyFrustum : public vsg::Inherit<vsg::MatrixTransform, MyFrustum> {
 public:
-    MyFrustum(vsg::ref_ptr<vsg::Perspective> proj, const double& sz = 1.0);
+    vsg::ref_ptr<vsg::Perspective> proj;
+// public:
+    MyFrustum(vsg::ref_ptr<vsg::Perspective> proj, const std::string& orientation = std::string());
     // void update(vsg::ref_ptr<vsg::Perspective> proj);
 };

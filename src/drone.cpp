@@ -73,33 +73,20 @@ int main(int argc, char** argv)
     auto lineShader = makeLineShader();
     scene->addChild(makeXYGrid(lineShader, font, options, vsg::vec4{1.0, 1.0, 1.0, 1.0}, 1.5, 10, 1.0, true));
 
-    auto frustum = MyFrustum::create(vsg::Perspective::create(30.0, 1.5, .1, 20.0), 1.0);
-    auto mfrustum = vsg::MatrixTransform::create();
-    mfrustum->matrix = vsg::rotate(M_PI/4, vsg::dvec3{1.0, 1.0, 0.0});
-    mfrustum->addChild(frustum);
-    scene->addChild(mfrustum);
-    // auto axes = makeAxes(builder);
-    // scene->addChild(axes);
-
-    // auto drone = MyDrone::create(builder, .3333);
-    // scene->addChild(drone);
-    // drone->setPosition(0.0, 2.0, 0.0, 0.0*M_PI/180.0);
-
-    // auto drone1 = MyDrone::create(builder, .3333);
-    // scene->addChild(drone1);
-    // drone1->setPosition(0.0, -2.0, 0.0, 0.0*M_PI/180.0);
+    auto drone = MyDrone::create(builder, .3333);
+    scene->addChild(drone);
 
     auto ship = MyShip::create(builder, .3333);
     scene->addChild(ship);
 
-    auto mo = MyQuad::create(options,
-        vsg::vec3{-1.0, -1.0, 3.0},
-        vsg::vec3{1.0, -1.0, 3.0},
-        vsg::vec3{1.0, 1.0, 3.0},
-        vsg::vec3{-1.0, 1.0, 3.0}
-    );
+    // auto mo = MyQuad::create(options,
+    //     vsg::vec3{-1.0, -1.0, 3.0},
+    //     vsg::vec3{1.0, -1.0, 3.0},
+    //     vsg::vec3{1.0, 1.0, 3.0},
+    //     vsg::vec3{-1.0, 1.0, 3.0}
+    // );
 
-    scene->addChild(mo);
+    // scene->addChild(mo);
 
     auto litScene = DynamicLighting::create(scene);
 
@@ -140,22 +127,7 @@ int main(int argc, char** argv)
     auto startTime = vsg::clock::now();
     size_t numFramesCompleted = 0;
 
-    // drone->setView(0.0, 0.0);
-    // {
-    //     using namespace std;
-    //     cout << drone->proj->transform() << endl << endl;
-    //     auto m = vsg::inverse(drone->proj->transform());
-    //     cout <<  "-1,-1,0=" << m * vsg::dvec3{-1,-1,0} << endl;
-    //     cout <<  "+1,-1,0=" << m * vsg::dvec3{+1,-1,0} << endl;
-    //     cout <<  "-1,+1,0=" << m * vsg::dvec3{-1,+1,0} << endl;
-    //     cout <<  "+1,+1,0=" << m * vsg::dvec3{+1,+1,0} << endl << endl;
-
-    //     cout <<  "-1,-1,+1=" << m * vsg::dvec3{-1,-1,+1} << endl;
-    //     cout <<  "+1,-1,+1=" << m * vsg::dvec3{+1,-1,+1} << endl;
-    //     cout <<  "-1,+1,+1=" << m * vsg::dvec3{-1,+1,+1} << endl;
-    //     cout <<  "+1,+1,+1=" << m * vsg::dvec3{+1,+1,+1} << endl << endl;
-    // }
-    // exit(0);
+    drone->setView(30.0, -45.0);
 
     // rendering main loop
     while (viewer->advanceToNextFrame())
@@ -167,8 +139,7 @@ int main(int argc, char** argv)
         auto t = std::chrono::duration<double, std::chrono::seconds::period>(vsg::clock::now() - startTime).count();
         double ipart;
         auto radians = -2.0 * M_PI * modf(t / 100.0, &ipart);
-        radians = 0.0;
-        // drone->setPosition(-5.0 * sin(radians), 5.0 * cos(radians), 3.0, radians + M_PI/2);
+        drone->setPosition(-5.0 * sin(radians), 5.0 * cos(radians), 3.0, radians + M_PI/2);
 
 
         // mo->update(

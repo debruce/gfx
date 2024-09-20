@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MyBuilder.h"
+#include "MyFrustum.h"
 #include <vsg/all.h>
 
 class LookAtTransform : public vsg::Inherit<vsg::Transform, LookAtTransform> {
@@ -39,7 +40,7 @@ class MyDrone : public vsg::Inherit<vsg::StateGroup, MyDrone> {
 public:
     vsg::ref_ptr<vsg::Node> body;
     vsg::ref_ptr<LookAtTransform> forwardView;
-    vsg::ref_ptr<vsg::Node> frustum;
+    vsg::ref_ptr<MyFrustum> frustum;
     vsg::ref_ptr<RelativeViewTransform> cameraView;
     vsg::ref_ptr<vsg::Perspective> proj;
 // public:

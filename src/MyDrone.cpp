@@ -30,29 +30,10 @@ MyDrone::MyDrone(vsg::ref_ptr<MyBuilder> builder, double sz)
         addChild(forwardView);
     }
 
-    {
-        vsg::GeometryInfo geomInfo;
-        vsg::StateInfo stateInfo;
-
-        geomInfo.dx = vsg::vec3{1.0, 0.0, 0.0};
-        geomInfo.dy = vsg::vec3{0.0, 1.0, 0.0};
-        geomInfo.dz = vsg::vec3{0.0, 0.0, 1.0};
-        // geomInfo.color = vsg::vec4{1.0, 1.0, 1.0, 1.0};
-        geomInfo.transform = vsg::rotate(-M_PI/2.0, 1.0, 0.0, 0.0) * vsg::rotate(M_PI/4.0, 0.0, 0.0, 1.0);
-        stateInfo.two_sided = true;
-        stateInfo.wireframe = true;
-        auto bat = vsg::vec2Array::create({
-            { 1.0, 0.0 },
-            { 1.0, 0.1 },
-            { 10.0, 1.5 },
-            { 10.0, 0.0 }
-        });
-        frustum = builder->createLathe(bat, 4, geomInfo, stateInfo, 0.0*M_PI/4.0);
-        cameraView = RelativeViewTransform::create(forwardView->lookAt);
-        cameraView->addChild(frustum);
-        addChild(cameraView);
-        proj = vsg::Perspective::create(1.0, 1.5, .1, 20.0);
-    }
+    frustum = MyFrustum::create(vsg::Perspective::create(15.0, 1.5, .1, 20.0), "lookTowardPosY");
+    cameraView = RelativeViewTransform::create(forwardView->lookAt);
+    cameraView->addChild(frustum);
+    addChild(cameraView);
 }
 
 void MyDrone::setPosition(double x, double y, double alt, double azim)
