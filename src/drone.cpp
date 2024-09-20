@@ -10,6 +10,7 @@
 #include "MyDrone.h"
 #include "MyObject.h"
 #include "MyQuad.h"
+#include "MyFrustum.h"
 
 #include <iostream>
 #include <sstream>
@@ -72,12 +73,14 @@ int main(int argc, char** argv)
     auto lineShader = makeLineShader();
     scene->addChild(makeXYGrid(lineShader, font, options, vsg::vec4{1.0, 1.0, 1.0, 1.0}, 1.5, 10, 1.0, true));
 
-    auto axes = makeAxes(builder);
-    scene->addChild(axes);
+    auto frustum = MyFrustum::create(options, vsg::Perspective::create(30.0, 1.5, .1, 20.0), 1.0);
+    scene->addChild(frustum);
+    // auto axes = makeAxes(builder);
+    // scene->addChild(axes);
 
-    auto drone = MyDrone::create(builder, .3333);
-    scene->addChild(drone);
-    drone->setPosition(0.0, 2.0, 0.0, 0.0*M_PI/180.0);
+    // auto drone = MyDrone::create(builder, .3333);
+    // scene->addChild(drone);
+    // drone->setPosition(0.0, 2.0, 0.0, 0.0*M_PI/180.0);
 
     // auto drone1 = MyDrone::create(builder, .3333);
     // scene->addChild(drone1);
@@ -134,7 +137,7 @@ int main(int argc, char** argv)
     auto startTime = vsg::clock::now();
     size_t numFramesCompleted = 0;
 
-    drone->setView(0.0, 0.0);
+    // drone->setView(0.0, 0.0);
     // {
     //     using namespace std;
     //     cout << drone->proj->transform() << endl << endl;
@@ -162,7 +165,7 @@ int main(int argc, char** argv)
         double ipart;
         auto radians = -2.0 * M_PI * modf(t / 100.0, &ipart);
         radians = 0.0;
-        drone->setPosition(-5.0 * sin(radians), 5.0 * cos(radians), 3.0, radians + M_PI/2);
+        // drone->setPosition(-5.0 * sin(radians), 5.0 * cos(radians), 3.0, radians + M_PI/2);
 
 
         // mo->update(
@@ -179,24 +182,24 @@ int main(int argc, char** argv)
         //         vsg::vec3{-1.0, 1.0, 3.0});
         // }
 
-        if (numFramesCompleted % 120 == 1) {
-            cout << "points" << endl;
-            double z = 20.0;
-            // drone->getIntercept(vsg::dvec3{0.0, 0.0, z});
-            auto results = drone->getGroundCorners();
-            cout << "lower left = " << results[0] << endl;
-            cout << "lower right = " << results[1] << endl;
-            cout << "upper left = " << results[2] << endl;
-            cout << "upper right = " << results[3] << endl;
-            // drone->getIntercept(vsg::dvec3{1.0, -1.0, z});
-            // drone->getIntercept(vsg::dvec3{-1.0, 1.0, z});
-            // drone->getIntercept(vsg::dvec3{1.0, 1.0, z});
-            // cout << "center = " << drone->getIntercept() << endl;
-            // cout << "lower left = " << drone->getIntercept(vsg::dvec3{0.0, 0.0, 1.0}) << endl;
-            // cout << "lower right = " << drone->getIntercept(vsg::dvec3{1.0, 0.0, 1.0}) << endl;
-            // cout << "upper left = " << drone->getIntercept(vsg::dvec3{0.0, 1.0, 1.0}) << endl;
-            // cout << "upper right = " << drone->getIntercept(vsg::dvec3{1.0, 1.0, 1.0}) << endl << endl;
-        }
+        // if (numFramesCompleted % 120 == 1) {
+        //     cout << "points" << endl;
+        //     double z = 20.0;
+        //     // drone->getIntercept(vsg::dvec3{0.0, 0.0, z});
+        //     auto results = drone->getGroundCorners();
+        //     cout << "lower left = " << results[0] << endl;
+        //     cout << "lower right = " << results[1] << endl;
+        //     cout << "upper left = " << results[2] << endl;
+        //     cout << "upper right = " << results[3] << endl;
+        //     // drone->getIntercept(vsg::dvec3{1.0, -1.0, z});
+        //     // drone->getIntercept(vsg::dvec3{-1.0, 1.0, z});
+        //     // drone->getIntercept(vsg::dvec3{1.0, 1.0, z});
+        //     // cout << "center = " << drone->getIntercept() << endl;
+        //     // cout << "lower left = " << drone->getIntercept(vsg::dvec3{0.0, 0.0, 1.0}) << endl;
+        //     // cout << "lower right = " << drone->getIntercept(vsg::dvec3{1.0, 0.0, 1.0}) << endl;
+        //     // cout << "upper left = " << drone->getIntercept(vsg::dvec3{0.0, 1.0, 1.0}) << endl;
+        //     // cout << "upper right = " << drone->getIntercept(vsg::dvec3{1.0, 1.0, 1.0}) << endl << endl;
+        // }
         ship->setPosition(5.0 * sin(radians), -5.0 * cos(radians), radians - M_PI/2 + M_PI);
 
         viewer->recordAndSubmit();

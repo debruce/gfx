@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-std::string VERT{R"(
+static std::string VERT{R"(
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
@@ -22,7 +22,7 @@ void main()
 
 )"};
 
-std::string FRAG{R"(
+static std::string FRAG{R"(
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
