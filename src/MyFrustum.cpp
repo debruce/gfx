@@ -52,7 +52,7 @@ void main()
 
 using namespace std;
 
-MyFrustum::MyFrustum(vsg::ref_ptr<const vsg::Options> options, vsg::ref_ptr<vsg::Perspective> proj, const double& sz) : proj(proj)
+MyFrustum::MyFrustum(vsg::ref_ptr<vsg::Perspective> proj, const double& sz) : proj(proj)
 {
     using namespace vsg;
 
@@ -96,20 +96,27 @@ MyFrustum::MyFrustum(vsg::ref_ptr<const vsg::Options> options, vsg::ref_ptr<vsg:
     auto bindGraphicsPipeline = vsg::BindGraphicsPipeline::create(graphicsPipeline);
 
     auto vertices = vec3Array::create({
-        {-1.0, -1.0, 1.0 },
+        {-1.0, -1.0, 1.0 }, // small end vertices
         {+1.0, -1.0, 1.0 },
         {-1.0, +1.0, 1.0 },
         {+1.0, +1.0, 1.0 },
-        {-1.0, -1.0, 0.0 },
+
+        {-1.0, -1.0, 0.0 }, // large end vertices
         {+1.0, -1.0, 0.0 },
         {-1.0, +1.0, 0.0 },
         {+1.0, +1.0, 0.0 },
+
+        {-1.0, -1.0, 0.0625 },
+        {+1.0, -1.0, 0.0625 },
+        {-1.0, +1.0, 0.0625 },
+        {+1.0, +1.0, 0.0625 },
     });
 
     auto indices = ushortArray::create({
-        0, 1, 0, 2, 2, 3, 1, 3,
-        4, 5, 4, 6, 6, 7, 5, 7,
-        0, 4, 1, 5, 2, 6, 3, 7
+        0, 4, 1, 5, 2, 6, 3, 7, // risers
+        0, 1, 0, 2, 2, 3, 1, 3, // small end rect
+        4, 5, 4, 6, 6, 7, 5, 7, // large end rect
+        8, 9, 8, 10, 10, 11, 9, 11, 
     });
 
     DataList arrays;

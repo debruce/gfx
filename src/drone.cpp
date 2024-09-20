@@ -73,8 +73,11 @@ int main(int argc, char** argv)
     auto lineShader = makeLineShader();
     scene->addChild(makeXYGrid(lineShader, font, options, vsg::vec4{1.0, 1.0, 1.0, 1.0}, 1.5, 10, 1.0, true));
 
-    auto frustum = MyFrustum::create(options, vsg::Perspective::create(30.0, 1.5, .1, 20.0), 1.0);
-    scene->addChild(frustum);
+    auto frustum = MyFrustum::create(vsg::Perspective::create(30.0, 1.5, .1, 20.0), 1.0);
+    auto mfrustum = vsg::MatrixTransform::create();
+    mfrustum->matrix = vsg::rotate(M_PI/4, vsg::dvec3{1.0, 1.0, 0.0});
+    mfrustum->addChild(frustum);
+    scene->addChild(mfrustum);
     // auto axes = makeAxes(builder);
     // scene->addChild(axes);
 
