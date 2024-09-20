@@ -2,13 +2,13 @@
 
 #include <iostream>
 
-struct FrustumParams
-{
-    vsg::mat4 inverseProj;
-    vsg::vec4 color;
-};
+// struct FrustumParams
+// {
+//     vsg::mat4 inverseProj;
+//     vsg::vec4 color;
+// };
 
-using FrustumParamsValue = vsg::Value<FrustumParams>;
+// using FrustumParamsValue = vsg::Value<FrustumParams>;
 
 static std::string VERT{R"(
 #version 450
@@ -52,7 +52,7 @@ void main()
 
 using namespace std;
 
-MyFrustum::MyFrustum(vsg::ref_ptr<vsg::Perspective> proj, const std::string& orientation) : proj(proj)
+MyFrustum::MyFrustum(vsg::ref_ptr<vsg::Perspective> proj, const std::string& orientation)
 {
     using namespace vsg;
 
@@ -134,12 +134,11 @@ MyFrustum::MyFrustum(vsg::ref_ptr<vsg::Perspective> proj, const std::string& ori
     vid->indexCount = static_cast<uint32_t>(indices->size());
     vid->instanceCount = 1;
 
-    auto frustumParams = FrustumParamsValue::create();
-    // frustumParams->properties.dataVariance = DataVariance::DYNAMIC_DATA;
-    frustumParams->value().inverseProj = inverse(Perspective::create(15.0, 1.5, .1, 20.0)->transform());
+    frustumParams = FrustumParamsValue::create();
+    frustumParams->properties.dataVariance = DataVariance::DYNAMIC_DATA;
+    frustumParams->value().inverseProj = inverse(proj->transform());
     frustumParams->value().color = vsg::vec4{1.0, 1.0, 0.0, 1.0};
     cout << frustumParams->value().inverseProj << endl;
-    // frustumParams->value().inverseProj = mat4();
     auto frustumParamsDescriptor = DescriptorBuffer::create(frustumParams, 1, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 
     auto descriptorSet = DescriptorSet::create(descriptorSetLayout, Descriptors{frustumParamsDescriptor});
@@ -151,6 +150,7 @@ MyFrustum::MyFrustum(vsg::ref_ptr<vsg::Perspective> proj, const std::string& ori
     stateGroup->addChild(vid);
 
     addChild(stateGroup);
+
     if (orientation == "lookTowardPosY") {
         matrix = rotate(M_PI/2, vsg::dvec3{1.0, 0.0, 0.0}) * rotate(M_PI, vsg::dvec3{0.0, 0.0, 1.0});
     }
@@ -165,12 +165,9 @@ MyFrustum::MyFrustum(vsg::ref_ptr<vsg::Perspective> proj, const std::string& ori
     }
 }
 
-// void MyQuad::update(const vsg::dvec3& a, const vsg::dvec3& b, const vsg::dvec3& c, const vsg::dvec3& d)
-// {
-//     vertices->at(0) = a;
-//     vertices->at(1) = b;
-//     vertices->at(2) = c;
-//     vertices->at(3) = d;
-//     vertices->dirty();
-// }
+void MyFrustum::update(vsg::ref_ptr<vsg::Perspective> proj)
+{
+    frustumParams->value().inverseProj = vsg::inverse(proj->transform());
+    frustumParams->dirty();
+}
 

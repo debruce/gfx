@@ -4,7 +4,7 @@
 
 vsg::ref_ptr<vsg::Group> makeAxes(vsg::ref_ptr<vsg::Builder> builder);
 
-MyDrone::MyDrone(vsg::ref_ptr<MyBuilder> builder, double sz)
+MyDrone::MyDrone(vsg::ref_ptr<MyBuilder> builder, vsg::ref_ptr<vsg::Perspective> proj, double sz)
 {
     {
         vsg::GeometryInfo geomInfo;
@@ -30,7 +30,7 @@ MyDrone::MyDrone(vsg::ref_ptr<MyBuilder> builder, double sz)
         addChild(forwardView);
     }
 
-    frustum = MyFrustum::create(vsg::Perspective::create(15.0, 1.5, .1, 20.0), "lookTowardPosY");
+    frustum = MyFrustum::create(proj, "lookTowardPosY");
     cameraView = RelativeViewTransform::create(forwardView->lookAt);
     cameraView->addChild(frustum);
     addChild(cameraView);
@@ -47,6 +47,11 @@ void MyDrone::setView(double yaw, double pitch, double roll)
         vsg::rotate(-yaw*M_PI/180, 0.0, 0.0, 1.0)
         * vsg::rotate(pitch*M_PI/180, 1.0, 0.0, 0.0)
         * vsg::rotate(roll*M_PI/180, 0.0, 1.0, 0.0);
+}
+
+void MyDrone::setProjection(vsg::ref_ptr<vsg::Perspective> proj)
+{
+    frustum->update(proj);
 }
 
 std::array<vsg::dvec2, 4> simpleCorners = {
