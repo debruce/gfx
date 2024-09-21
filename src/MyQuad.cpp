@@ -9,15 +9,14 @@ static std::string VERT{R"(
 layout(push_constant) uniform PushConstants { mat4 projection; mat4 modelView; };
 
 layout(location = 0) in vec3 vertex;
-layout(location = 1) in vec2 in_texcoord;
 
 out gl_PerVertex { vec4 gl_Position; };
-layout(location = 0) out vec2 out_texcoord;
+layout(location = 0) out vec4 world;
 
 void main()
 {
-    gl_Position = (projection * modelView) * vec4(vertex, 1.0);
-    out_texcoord = in_texcoord;
+    world = modelView * vec4(vertex, 1.0);
+    gl_Position = projection * world;
 }
 
 )"};
@@ -26,30 +25,26 @@ static std::string FRAG{R"(
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-layout(location = 0) in vec2 out_texcoord;
+layout(location = 0) in vec4 world;
 layout(location = 0) out vec4 color;
 layout(set = 0, binding = 0) uniform sampler2D texSampler;
 
 layout(set = 0, binding = 1) uniform ProjectiveParams 
 {
-    mat4 inverseProjection;
-    mat4 inverseModelView;
+    mat4 inverseCombo;
 }; 
 
 void main()
 {
-    vec4 lookupCoord = (inverseProjection * inverseModelView) * vec4(out_texcoord.xy, 0.0, 1.0);
+    vec4 lookupCoord = inverseCombo * vec4(world.xy, 0.0, 1.0);
     color = texture(texSampler, lookupCoord.xy / lookupCoord.w);
-    // color = texture(texSampler, out_texcoord);
-    // color = vec4(1.0, 0.0, 0.0, 1.0);
 }
 
 )"};
 
 struct ProjectiveUniform
 {
-    vsg::mat4 inverseProjection;
-    vsg::mat4 inverseModelView;
+    vsg::mat4 inverseCombo;
 };
 
 using ProjectiveUniformValue = vsg::Value<ProjectiveUniform>;
@@ -98,7 +93,6 @@ MyQuad::MyQuad(vsg::ref_ptr<const vsg::Options> options, const std::array<vsg::d
 
     vsg::VertexInputState::Attributes vertexAttributeDescriptions{
         VkVertexInputAttributeDescription{0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0},  // vertex data
-        VkVertexInputAttributeDescription{1, 0, VK_FORMAT_R32G32_SFLOAT, 12},    // tex coord data
     };
 
     vsg::GraphicsPipelineStates pipelineStates{
@@ -117,7 +111,6 @@ MyQuad::MyQuad(vsg::ref_ptr<const vsg::Options> options, const std::array<vsg::d
     auto descriptorSetLayout = vsg::DescriptorSetLayout::create(descriptorBindings);
 
     auto pipelineLayout = vsg::PipelineLayout::create(vsg::DescriptorSetLayouts{descriptorSetLayout}, pushConstantRanges);
-    // auto pipelineLayout = vsg::PipelineLayout::create(vsg::DescriptorSetLayouts{}, pushConstantRanges);
     auto graphicsPipeline = vsg::GraphicsPipeline::create(pipelineLayout, vsg::ShaderStages{vertexShader, fragmentShader}, pipelineStates);
     auto bindGraphicsPipeline = vsg::BindGraphicsPipeline::create(graphicsPipeline);
 
@@ -161,8 +154,7 @@ MyQuad::MyQuad(vsg::ref_ptr<const vsg::Options> options, const std::array<vsg::d
 
     auto projectiveUniform = ProjectiveUniformValue::create();
     projectiveUniform->properties.dataVariance = vsg::DataVariance::DYNAMIC_DATA;
-    projectiveUniform->value().inverseProjection = vsg::mat4();
-    projectiveUniform->value().inverseModelView = vsg::scale(vsg::vec3{.25, .25, .25});
+    projectiveUniform->value().inverseCombo = vsg::mat4();
     auto projectiveUniformDescriptor = vsg::DescriptorBuffer::create(projectiveUniform, 1, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 
     auto descriptorSet = vsg::DescriptorSet::create(descriptorSetLayout, vsg::Descriptors{texture, projectiveUniformDescriptor});
