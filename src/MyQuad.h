@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vsg/all.h>
+#include "MyFrustum.h"
 
 class MyQuad : public vsg::Inherit<vsg::StateGroup, MyQuad> {
     vsg::ref_ptr<vsg::ShaderSet> _phongShaderSet;
@@ -8,6 +8,6 @@ class MyQuad : public vsg::Inherit<vsg::StateGroup, MyQuad> {
     vsg::ref_ptr<vsg::vec3Array> vertices;
     vsg::ref_ptr<vsg::ubvec4Array2D> image;
 public:
-    MyQuad(vsg::ref_ptr<const vsg::Options> options, const std::array<vsg::dvec3, 4>& points);
-    void update(const std::array<vsg::dvec3, 4>& points);
+    MyQuad();
+    void update(vsg::ref_ptr<MyFrustum> frustum);
 };

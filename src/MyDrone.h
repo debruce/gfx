@@ -47,8 +47,6 @@ public:
     MyDrone(vsg::ref_ptr<MyBuilder> builder, vsg::ref_ptr<vsg::Perspective> proj, double sz = 1.0);
     void setPosition(double x, double y, double alt, double azim);
     void setView(double yaw, double pitch, double roll = 0.0f);
-    void setProjection(vsg::ref_ptr<vsg::Perspective> proj);
-    std::array<vsg::dvec3, 4> getGroundCorners();
 };
 
 

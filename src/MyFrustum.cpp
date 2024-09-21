@@ -165,25 +165,21 @@ MyFrustum::MyFrustum(vsg::ref_ptr<vsg::Perspective> proj, const std::string& ori
     }
 }
 
-void MyFrustum::update(vsg::ref_ptr<vsg::Perspective> proj)
-{
-    inverseProj = inverse(proj->transform());
-    frustumParams->value().inverseProj = inverseProj;
-    frustumParams->dirty();
-}
-
 vsg::dvec3 hnorm(const vsg::dvec4 vec)
 {
     return vsg::dvec3{vec.x/vec.w, vec.y/vec.w, vec.z/vec.w};
 }
 
-std::array<vsg::dvec3, 4> MyFrustum::getZIntercept(const vsg::dmat4& modelView)
+void MyFrustum::update(vsg::ref_ptr<vsg::Perspective> proj,  const vsg::dmat4& mv)
 {
     using namespace vsg;
+    using namespace std;
 
-    std::array<dvec3, 4> results;
+    inverseProj = inverse(proj->transform());
+    frustumParams->value().inverseProj = inverseProj;
+    modelView = mv;
 
-    std::array<dvec4, 8> rawCube = {
+    array<dvec4, 8> rawCube = {
         dvec4{-1.0, -1.0, 1.0, 1.0 }, // small end vertices
         dvec4{+1.0, -1.0, 1.0, 1.0 },
         dvec4{-1.0, +1.0, 1.0, 1.0 },
@@ -200,7 +196,8 @@ std::array<vsg::dvec3, 4> MyFrustum::getZIntercept(const vsg::dmat4& modelView)
         auto far = hnorm(m * rawCube[i+4]);
         auto diff = far - near;
         auto t = -near.z / diff.z;
-        results[i] = near + diff * t;
+        corners[i] = near + diff * t;
     }
-    return results;
+
+    frustumParams->dirty();
 }
