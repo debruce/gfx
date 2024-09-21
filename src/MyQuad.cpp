@@ -42,13 +42,6 @@ void main()
 
 )"};
 
-struct ProjectiveUniform
-{
-    vsg::mat4 inverseCombo;
-};
-
-using ProjectiveUniformValue = vsg::Value<ProjectiveUniform>;
-
 struct SetMyPipelineStates : public vsg::Visitor    // auto indices = ushortArray::create({0, 1, 2, 3, 0});
 
 {
@@ -116,12 +109,10 @@ MyQuad::MyQuad()
 
     vertices = vec3Array::create(4);
     vertices->properties.dataVariance = vsg::DYNAMIC_DATA;
-    auto texcoords = vec2Array::create({vec2{0.0, 0.0}, vec2{1.0, 0.0}, vec2{1.0, 1.0}, vec2{0.0, 1.0}});
     auto indices = ushortArray::create({0, 2, 1, 0, 3, 2});
 
     DataList arrays;
     arrays.push_back(vertices);
-    arrays.push_back(texcoords);
 
     auto vid = VertexIndexDraw::create();
     vid->assignArrays(arrays);
@@ -148,9 +139,10 @@ MyQuad::MyQuad()
 
     auto texture = vsg::DescriptorImage::create(sampler, image, 0, 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 
-    auto projectiveUniform = ProjectiveUniformValue::create();
+    inverseCombo = vsg::dmat4();
+    projectiveUniform = ProjectiveUniformValue::create();
     projectiveUniform->properties.dataVariance = vsg::DataVariance::DYNAMIC_DATA;
-    projectiveUniform->value().inverseCombo = vsg::mat4();
+    projectiveUniform->value().inverseCombo = inverseCombo;
     auto projectiveUniformDescriptor = vsg::DescriptorBuffer::create(projectiveUniform, 1, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 
     auto descriptorSet = vsg::DescriptorSet::create(descriptorSetLayout, vsg::Descriptors{texture, projectiveUniformDescriptor});
@@ -173,5 +165,13 @@ void MyQuad::update(const std::array<vsg::dvec3, 4>& points)
     vertices->at(2) = narrow(points[3]);
     vertices->at(3) = narrow(points[2]);
     vertices->dirty();
+
+    vsg::dmat4 m;
+    for (size_t i = 0; i < 4; i++) {
+        for (size_t j = 0; j < 4; j++) {
+            inverseCombo[i][j] = float(m[i][j]);
+        }
+    }
+    projectiveUniform->dirty();
 }
 
