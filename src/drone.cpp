@@ -145,42 +145,6 @@ int main(int argc, char** argv)
         auto results = drone->frustum->getZIntercept(drone->cameraView->transform());
         mo->update(results);
 
-        // if (numFramesCompleted % 60 == 0) {
-        //     auto results = drone->frustum->getZIntercept(drone->cameraView->transform());
-        //     cout << results[0] << " ## " << results[1] << " ## " << results[2] << " ## " << results[3] << endl;
-        // }
-        // mo->update(
-        //     drone->getIntercept(vsg::dvec3{-1.5, -1.5, 10.0}),
-        //     drone->getIntercept(vsg::dvec3{ 1.5, -1.5, 10.0}),
-        //     drone->getIntercept(vsg::dvec3{ 1.5,  1.5, 10.0}),
-        //     drone->getIntercept(vsg::dvec3{-1.5,  1.5, 10.0})
-        // );
-        // if (numFramesCompleted > 300) {
-        //     mo->update(
-        //         vsg::vec3{-1.0, -1.0, 3.0},
-        //         vsg::vec3{1.0, -1.0, 3.0},
-        //         vsg::vec3{2.0, 2.0, 3.0},
-        //         vsg::vec3{-1.0, 1.0, 3.0});
-        // }
-
-        // if (numFramesCompleted % 120 == 1) {
-        //     cout << "points" << endl;
-        //     double z = 20.0;
-        //     // drone->getIntercept(vsg::dvec3{0.0, 0.0, z});
-        //     auto results = drone->getGroundCorners();
-        //     cout << "lower left = " << results[0] << endl;
-        //     cout << "lower right = " << results[1] << endl;
-        //     cout << "upper left = " << results[2] << endl;
-        //     cout << "upper right = " << results[3] << endl;
-        //     // drone->getIntercept(vsg::dvec3{1.0, -1.0, z});
-        //     // drone->getIntercept(vsg::dvec3{-1.0, 1.0, z});
-        //     // drone->getIntercept(vsg::dvec3{1.0, 1.0, z});
-        //     // cout << "center = " << drone->getIntercept() << endl;
-        //     // cout << "lower left = " << drone->getIntercept(vsg::dvec3{0.0, 0.0, 1.0}) << endl;
-        //     // cout << "lower right = " << drone->getIntercept(vsg::dvec3{1.0, 0.0, 1.0}) << endl;
-        //     // cout << "upper left = " << drone->getIntercept(vsg::dvec3{0.0, 1.0, 1.0}) << endl;
-        //     // cout << "upper right = " << drone->getIntercept(vsg::dvec3{1.0, 1.0, 1.0}) << endl << endl;
-        // }
         ship->setPosition(5.0 * sin(radians), -5.0 * cos(radians), radians - M_PI/2 + M_PI);
 
         viewer->recordAndSubmit();
