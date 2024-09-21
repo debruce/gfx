@@ -70,9 +70,12 @@ struct SetMyPipelineStates : public vsg::Visitor    // auto indices = ushortArra
 
 using namespace std;
 
+vsg::vec3 narrow(const vsg::dvec3& in)
+{
+    return vsg::vec3{float(in.x), float(in.y), float(in.z)};
+}
 
-MyQuad::MyQuad(vsg::ref_ptr<const vsg::Options> options, const vsg::vec3& a,     // auto indices = ushortArray::create({0, 1, 2, 3, 0});
-const vsg::vec3& b, const vsg::vec3& c, const vsg::vec3& d)
+MyQuad::MyQuad(vsg::ref_ptr<const vsg::Options> options, const std::array<vsg::dvec3, 4>& points)
 {
     using namespace vsg;
 
@@ -118,7 +121,11 @@ const vsg::vec3& b, const vsg::vec3& c, const vsg::vec3& d)
     auto graphicsPipeline = vsg::GraphicsPipeline::create(pipelineLayout, vsg::ShaderStages{vertexShader, fragmentShader}, pipelineStates);
     auto bindGraphicsPipeline = vsg::BindGraphicsPipeline::create(graphicsPipeline);
 
-    vertices = vec3Array::create({a, b, c, d});
+    vertices = vec3Array::create(4);
+    vertices->at(0) = narrow(points[0]);
+    vertices->at(1) = narrow(points[1]);
+    vertices->at(2) = narrow(points[2]);
+    vertices->at(3) = narrow(points[3]);
     vertices->properties.dataVariance = vsg::DYNAMIC_DATA;
     auto texcoords = vec2Array::create({vec2{0.0, 0.0}, vec2{1.0, 0.0}, vec2{1.0, 1.0}, vec2{0.0, 1.0}});
     auto indices = ushortArray::create({0, 2, 1, 0, 3, 2});
@@ -170,12 +177,13 @@ const vsg::vec3& b, const vsg::vec3& c, const vsg::vec3& d)
     addChild(stateGroup);
 }
 
-void MyQuad::update(const vsg::dvec3& a, const vsg::dvec3& b, const vsg::dvec3& c, const vsg::dvec3& d)
+void MyQuad::update(const std::array<vsg::dvec3, 4>& points)
 {
-    vertices->at(0) = a;
-    vertices->at(1) = b;
-    vertices->at(2) = c;
-    vertices->at(3) = d;
+    using namespace vsg;
+    vertices->at(0) = narrow(points[0]);
+    vertices->at(1) = narrow(points[1]);
+    vertices->at(2) = narrow(points[3]);
+    vertices->at(3) = narrow(points[2]);
     vertices->dirty();
 }
 
