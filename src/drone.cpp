@@ -75,22 +75,20 @@ int main(int argc, char** argv)
 
     auto wideCamera = vsg::Perspective::create(30.0, 1.5, .1, 7.0);
     auto narrowCamera = vsg::Perspective::create(10.0, 1.5, .1, 7.0);
-    auto drone = MyDrone::create(builder, wideCamera, .3333);
+    auto drone = MyDrone::create(builder, narrowCamera, .3333);
     scene->addChild(drone);
 
     std::array<vsg::dvec3,4> sPoints = {
-        vsg::dvec3{-1.0, -1.0, 3.0},
-        vsg::dvec3{1.0, -1.0, 3.0},
-        vsg::dvec3{1.0, 1.0, 3.0},
-        vsg::dvec3{-1.0, 1.0, 3.0}
+        vsg::dvec3{0.0, 0.0, 0.0},
+        vsg::dvec3{1.0, 0.0, 0.0},
+        vsg::dvec3{0.0, 1.0, 0.0},
+        vsg::dvec3{0.0, 1.0, 0.0}
     };
     auto mo = MyQuad::create(options, sPoints);
     scene->addChild(mo);
 
     auto ship = MyShip::create(builder, .3333);
     scene->addChild(ship);
-
-
 
     auto litScene = DynamicLighting::create(scene);
 
@@ -131,8 +129,6 @@ int main(int argc, char** argv)
     auto startTime = vsg::clock::now();
     size_t numFramesCompleted = 0;
 
-    drone->setView(0.0, -45.0);
-
     // rendering main loop
     while (viewer->advanceToNextFrame())
     {
@@ -144,6 +140,7 @@ int main(int argc, char** argv)
         double ipart;
         auto radians = -2.0 * M_PI * modf(t / 100.0, &ipart);
         drone->setPosition(-5.0 * sin(radians), 5.0 * cos(radians), 3.0, radians + M_PI/2);
+        drone->setView(90.0, -45.0 + 10.0*sin(radians*10));
 
         auto results = drone->frustum->getZIntercept(drone->cameraView->transform());
         mo->update(results);

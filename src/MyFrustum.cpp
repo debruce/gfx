@@ -194,7 +194,7 @@ std::array<vsg::dvec3, 4> MyFrustum::getZIntercept(const vsg::dmat4& modelView)
         dvec4{+1.0, +1.0, 0.0, 1.0 },
     };
 
-    auto m = modelView * inverseProj;
+    auto m = modelView * vsg::rotate(M_PI/2.0, vsg::dvec3{1.0, 0.0, 0.0}) * inverseProj;
     for (auto i = 0; i < 4; i++) {
         auto near = hnorm(m * rawCube[i]);
         auto far = hnorm(m * rawCube[i+4]);
