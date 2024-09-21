@@ -78,13 +78,7 @@ int main(int argc, char** argv)
     auto drone = MyDrone::create(builder, narrowCamera, .3333);
     scene->addChild(drone);
 
-    std::array<vsg::dvec3,4> sPoints = {
-        vsg::dvec3{0.0, 0.0, 0.0},
-        vsg::dvec3{1.0, 0.0, 0.0},
-        vsg::dvec3{0.0, 1.0, 0.0},
-        vsg::dvec3{0.0, 1.0, 0.0}
-    };
-    auto mo = MyQuad::create(options, sPoints);
+    auto mo = MyQuad::create();
     scene->addChild(mo);
 
     auto ship = MyShip::create(builder, .3333);

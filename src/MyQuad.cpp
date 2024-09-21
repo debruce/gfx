@@ -70,7 +70,7 @@ vsg::vec3 narrow(const vsg::dvec3& in)
     return vsg::vec3{float(in.x), float(in.y), float(in.z)};
 }
 
-MyQuad::MyQuad(vsg::ref_ptr<const vsg::Options> options, const std::array<vsg::dvec3, 4>& points)
+MyQuad::MyQuad()
 {
     using namespace vsg;
 
@@ -115,10 +115,6 @@ MyQuad::MyQuad(vsg::ref_ptr<const vsg::Options> options, const std::array<vsg::d
     auto bindGraphicsPipeline = vsg::BindGraphicsPipeline::create(graphicsPipeline);
 
     vertices = vec3Array::create(4);
-    vertices->at(0) = narrow(points[0]);
-    vertices->at(1) = narrow(points[1]);
-    vertices->at(2) = narrow(points[2]);
-    vertices->at(3) = narrow(points[3]);
     vertices->properties.dataVariance = vsg::DYNAMIC_DATA;
     auto texcoords = vec2Array::create({vec2{0.0, 0.0}, vec2{1.0, 0.0}, vec2{1.0, 1.0}, vec2{0.0, 1.0}});
     auto indices = ushortArray::create({0, 2, 1, 0, 3, 2});
