@@ -8,6 +8,7 @@
 #include "DynamicLighting.h"
 #include "MyBuilder.h"
 #include "MyDrone.h"
+#include "MyShip.h"
 #include "MyObject.h"
 #include "MyQuad.h"
 #include "MyFrustum.h"
@@ -136,7 +137,7 @@ int main(int argc, char** argv)
         drone->setPosition(-5.0 * sin(radians), 5.0 * cos(radians), 3.0, radians + M_PI/2);
         drone->setView(90.0, -45.0 + 10.0*sin(radians*10));
 
-        auto results = drone->frustum->getZIntercept(drone->cameraView->transform());
+        auto results = drone->frustum->getZIntercept(drone->frustumView->transform());
         mo->update(results);
 
         ship->setPosition(5.0 * sin(radians), -5.0 * cos(radians), radians - M_PI/2 + M_PI);

@@ -24,6 +24,7 @@ add_executable(drone src/drone.cpp
     src/GetPipelineConfigForLines.cpp
     src/MyBuilder.cpp
     src/MyDrone.cpp
+    src/MyShip.cpp
     src/MyObject.cpp
     src/MyQuad.cpp
     src/MyFrustum.cpp
