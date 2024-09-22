@@ -2,14 +2,6 @@
 
 #include <iostream>
 
-// struct FrustumParams
-// {
-//     vsg::mat4 inverseProj;
-//     vsg::vec4 color;
-// };
-
-// using FrustumParamsValue = vsg::Value<FrustumParams>;
-
 static std::string VERT{R"(
 #version 450
 #extension GL_ARB_separate_shader_objects : enable

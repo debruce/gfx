@@ -42,20 +42,6 @@ void main()
 
 )"};
 
-struct SetMyPipelineStates : public vsg::Visitor    // auto indices = ushortArray::create({0, 1, 2, 3, 0});
-
-{
-    VkPrimitiveTopology topo;
-    const vsg::StateInfo si;
-
-    SetMyPipelineStates(const VkPrimitiveTopology& topo, const vsg::StateInfo& si) : topo(topo), si(si){}
-
-    void apply(vsg::Object& object) override { object.traverse(*this); }
-    void apply(vsg::RasterizationState& rs) override { rs.cullMode = VK_CULL_MODE_NONE; }
-    void apply(vsg::InputAssemblyState& ias) override { ias.topology = topo; }
-    void apply(vsg::ColorBlendState& cbs) override { cbs.configureAttachments(si.blending); }
-};
-
 using namespace std;
 
 vsg::vec3 narrow(const vsg::dvec3& in)
