@@ -76,10 +76,11 @@ int main(int argc, char** argv)
 
     auto wideCamera = vsg::Perspective::create(30.0, 1.5, 0.1, 7.0);
     auto narrowCamera = vsg::Perspective::create(10.0, 1.5, 0.1, 7.0);
+    // auto image = vsg::read_cast<vsg::Data>("../banana.jpg");
     auto drone = MyDrone::create(builder, wideCamera, .3333);
     scene->addChild(drone);
 
-    auto mo = MyQuad::create();
+    auto mo = MyQuad::create(options);
     scene->addChild(mo);
 
     auto ship = MyShip::create(builder, .3333);
@@ -124,7 +125,7 @@ int main(int argc, char** argv)
     auto startTime = vsg::clock::now();
     size_t numFramesCompleted = 0;
 
-    drone->setView(0.0, -90.0);
+    drone->setView(45.0, -45.0);
 
     // rendering main loop
     while (viewer->advanceToNextFrame())

@@ -19,6 +19,6 @@ class MyQuad : public vsg::Inherit<vsg::StateGroup, MyQuad> {
     vsg::ref_ptr<vsg::ubvec4Array2D> image;
     vsg::ref_ptr<ProjectiveUniformValue> projectiveUniform;
 public:
-    MyQuad();
+    MyQuad(vsg::ref_ptr<vsg::Options> options);
     void update(vsg::ref_ptr<MyFrustum> frustum);
 };

@@ -60,7 +60,7 @@ vsg::vec3 narrow(const vsg::dvec3& in)
     return vsg::vec3{float(in.x), float(in.y), float(in.z)};
 }
 
-MyQuad::MyQuad()
+MyQuad::MyQuad(vsg::ref_ptr<vsg::Options> options)
 {
     using namespace vsg;
 
@@ -117,16 +117,19 @@ MyQuad::MyQuad()
     vid->indexCount = static_cast<uint32_t>(indices->size());
     vid->instanceCount = 1;
 
-    image = ubvec4Array2D::create(512, 512);
-    for (auto i = 0; i < 512; i++) {
-        for (auto j = 0; j < 512; j++) {
-            if ((i & 64) == (j & 64))
-                image->at(i,j) = vsg::ubvec4{255, 0, 255, 255};
-            else
-                image->at(i,j) = vsg::ubvec4{0, 255, 0, 255};
-        }
-    }
-    image->properties.format = VK_FORMAT_R8G8B8A8_UNORM;
+    cout << "before read_cast" << endl;
+    auto image = vsg::read_cast<vsg::Data>("../IMG_2791.jpg", options);
+    cout << "after read_cast image=" << image << endl;
+    // image = ubvec4Array2D::create(512, 512);
+    // for (auto i = 0; i < 512; i++) {
+    //     for (auto j = 0; j < 512; j++) {
+    //         if ((i & 64) == (j & 64))
+    //             image->at(i,j) = vsg::ubvec4{255, 0, 255, 255};
+    //         else
+    //             image->at(i,j) = vsg::ubvec4{0, 255, 0, 255};
+    //     }
+    // }
+    // image->properties.format = VK_FORMAT_R8G8B8A8_UNORM;
     image->properties.dataVariance = vsg::DYNAMIC_DATA;
     image->dirty();
 
