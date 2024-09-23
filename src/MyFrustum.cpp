@@ -44,7 +44,8 @@ void main()
 
 using namespace std;
 
-MyFrustum::MyFrustum(vsg::ref_ptr<vsg::Perspective> proj, const std::string& orientation)
+MyFrustum::MyFrustum(vsg::ref_ptr<AbsoluteLookAtTransform> absTransform, vsg::ref_ptr<vsg::Perspective> proj, const std::string& orientation)
+ : vsg::Inherit<RelativeLookAtTransform, MyFrustum>(absTransform->lookAt)
 {
     using namespace vsg;
 
@@ -141,27 +142,22 @@ MyFrustum::MyFrustum(vsg::ref_ptr<vsg::Perspective> proj, const std::string& ori
     stateGroup->addChild(bindDescriptorSet);
     stateGroup->addChild(vid);
 
-    addChild(stateGroup);
-
+    auto flipper = MatrixTransform::create();
+    flipper->addChild(stateGroup);
     if (orientation == "lookTowardPosY") {
-        matrix = rotate(M_PI/2, vsg::dvec3{1.0, 0.0, 0.0}) * rotate(M_PI, vsg::dvec3{0.0, 0.0, 1.0});
+        flipper->matrix = rotate(M_PI/2, vsg::dvec3{1.0, 0.0, 0.0}) * rotate(M_PI, vsg::dvec3{0.0, 0.0, 1.0});
     }
     if (orientation == "lookTowardNegY") {
-        matrix = rotate(-M_PI/2, vsg::dvec3{1.0, 0.0, 0.0});
+        flipper->matrix = rotate(-M_PI/2, vsg::dvec3{1.0, 0.0, 0.0});
     }
     else if (orientation == "lookTowardPosX") {
-        matrix = rotate(-M_PI/2, vsg::dvec3{0.0, 1.0, 0.0}) * rotate(M_PI/2, vsg::dvec3{0.0, 0.0, 1.0});
+        flipper->matrix = rotate(-M_PI/2, vsg::dvec3{0.0, 1.0, 0.0}) * rotate(M_PI/2, vsg::dvec3{0.0, 0.0, 1.0});
     }
     else if (orientation == "lookTowardNegX") {
-        matrix = rotate(M_PI/2, vsg::dvec3{0.0, 1.0, 0.0}) * rotate(-M_PI/2, vsg::dvec3{0.0, 0.0, 1.0});
+        flipper->matrix = rotate(M_PI/2, vsg::dvec3{0.0, 1.0, 0.0}) * rotate(-M_PI/2, vsg::dvec3{0.0, 0.0, 1.0});
     }
-}
 
-void MyFrustum::update(vsg::ref_ptr<vsg::Perspective> proj)
-{
-    inverseProj = inverse(proj->transform());
-    frustumParams->value().inverseProj = inverseProj;
-    frustumParams->dirty();
+    addChild(flipper);
 }
 
 vsg::dvec3 hnorm(const vsg::dvec4 vec)
@@ -169,30 +165,25 @@ vsg::dvec3 hnorm(const vsg::dvec4 vec)
     return vsg::dvec3{vec.x/vec.w, vec.y/vec.w, vec.z/vec.w};
 }
 
-std::array<vsg::dvec3, 4> MyFrustum::getZIntercept(const vsg::dmat4& modelView)
+static std::array<vsg::dvec4, 8> rawCube = {
+    vsg::dvec4{-1.0, -1.0, 1.0, 1.0 }, // small end vertices
+    vsg::dvec4{+1.0, -1.0, 1.0, 1.0 },
+    vsg::dvec4{-1.0, +1.0, 1.0, 1.0 },
+    vsg::dvec4{+1.0, +1.0, 1.0, 1.0 },
+    vsg::dvec4{-1.0, -1.0, 0.0, 1.0 }, // large end vertices
+    vsg::dvec4{+1.0, -1.0, 0.0, 1.0 },
+    vsg::dvec4{-1.0, +1.0, 0.0, 1.0 },
+    vsg::dvec4{+1.0, +1.0, 0.0, 1.0 },
+};
+
+void MyFrustum::update()
 {
-    using namespace vsg;
-
-    std::array<dvec3, 4> results;
-
-    std::array<dvec4, 8> rawCube = {
-        dvec4{-1.0, -1.0, 1.0, 1.0 }, // small end vertices
-        dvec4{+1.0, -1.0, 1.0, 1.0 },
-        dvec4{-1.0, +1.0, 1.0, 1.0 },
-        dvec4{+1.0, +1.0, 1.0, 1.0 },
-        dvec4{-1.0, -1.0, 0.0, 1.0 }, // large end vertices
-        dvec4{+1.0, -1.0, 0.0, 1.0 },
-        dvec4{-1.0, +1.0, 0.0, 1.0 },
-        dvec4{+1.0, +1.0, 0.0, 1.0 },
-    };
-
-    auto m = modelView * vsg::rotate(M_PI/2.0, vsg::dvec3{1.0, 0.0, 0.0}) * inverseProj;
+    auto m = transform() * vsg::rotate(M_PI/2.0, vsg::dvec3{1.0, 0.0, 0.0}) * inverseProj;
     for (auto i = 0; i < 4; i++) {
         auto near = hnorm(m * rawCube[i]);
         auto far = hnorm(m * rawCube[i+4]);
         auto diff = far - near;
         auto t = -near.z / diff.z;
-        results[i] = near + diff * t;
+        corners[i] = near + diff * t;
     }
-    return results;
 }

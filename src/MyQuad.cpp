@@ -36,8 +36,11 @@ layout(set = 0, binding = 1) uniform ProjectiveParams
 
 void main()
 {
-    vec4 lookupCoord = inverseCombo * vec4(world.xy, 0.0, 1.0);
-    color = texture(texSampler, lookupCoord.xy / lookupCoord.w);
+    // vec4 focalCoord = inverseCombo * vec4(world.xy, 0.0, 1.0);
+    // vec2 lookupCoord =  .5 + .5 * focalCoord.xy / focalCoord.w;
+    // // color = texture(texSampler, .5 + .5 * lookupCoord.xy / lookupCoord.w);
+    // color = vec4(lookupCoord.xy, 0.0, 1.0);
+    color = texture(texSampler, world.xy);
 }
 
 )"};
@@ -125,10 +128,9 @@ MyQuad::MyQuad()
 
     auto texture = vsg::DescriptorImage::create(sampler, image, 0, 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 
-    inverseCombo = vsg::dmat4();
     projectiveUniform = ProjectiveUniformValue::create();
     projectiveUniform->properties.dataVariance = vsg::DataVariance::DYNAMIC_DATA;
-    projectiveUniform->value().inverseCombo = inverseCombo;
+    projectiveUniform->value().inverseCombo = vsg::mat4();
     auto projectiveUniformDescriptor = vsg::DescriptorBuffer::create(projectiveUniform, 1, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 
     auto descriptorSet = vsg::DescriptorSet::create(descriptorSetLayout, vsg::Descriptors{texture, projectiveUniformDescriptor});
@@ -143,21 +145,22 @@ MyQuad::MyQuad()
     addChild(stateGroup);
 }
 
-void MyQuad::update(const std::array<vsg::dvec3, 4>& points)
+void MyQuad::update(vsg::ref_ptr<MyFrustum> frustum)
 {
-    using namespace vsg;
-    vertices->at(0) = narrow(points[0]);
-    vertices->at(1) = narrow(points[1]);
-    vertices->at(2) = narrow(points[3]);
-    vertices->at(3) = narrow(points[2]);
+    // using namespace vsg;
+    vertices->at(0) = narrow(frustum->corners[0]);
+    vertices->at(1) = narrow(frustum->corners[1]);
+    vertices->at(2) = narrow(frustum->corners[3]);
+    vertices->at(3) = narrow(frustum->corners[2]);
     vertices->dirty();
 
-    vsg::dmat4 m;
+    vsg::dmat4 m = frustum->inverseProj * vsg::inverse(frustum->transform());
     for (size_t i = 0; i < 4; i++) {
         for (size_t j = 0; j < 4; j++) {
-            inverseCombo[i][j] = float(m[i][j]);
+            projectiveUniform->value().inverseCombo[i][j] = float(m[i][j]);
         }
     }
+    // cout << inverseCombo << endl << endl;
     projectiveUniform->dirty();
 }
 

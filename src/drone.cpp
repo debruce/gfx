@@ -74,9 +74,9 @@ int main(int argc, char** argv)
     auto lineShader = makeLineShader();
     scene->addChild(makeXYGrid(lineShader, font, options, vsg::vec4{1.0, 1.0, 1.0, 1.0}, 1.5, 10, 1.0, true));
 
-    auto wideCamera = vsg::Perspective::create(30.0, 1.5, .1, 7.0);
-    auto narrowCamera = vsg::Perspective::create(10.0, 1.5, .1, 7.0);
-    auto drone = MyDrone::create(builder, narrowCamera, .3333);
+    auto wideCamera = vsg::Perspective::create(30.0, 1.5, 0.1, 7.0);
+    auto narrowCamera = vsg::Perspective::create(10.0, 1.5, 0.1, 7.0);
+    auto drone = MyDrone::create(builder, wideCamera, .3333);
     scene->addChild(drone);
 
     auto mo = MyQuad::create();
@@ -124,6 +124,8 @@ int main(int argc, char** argv)
     auto startTime = vsg::clock::now();
     size_t numFramesCompleted = 0;
 
+    drone->setView(90.0, -40.0);
+
     // rendering main loop
     while (viewer->advanceToNextFrame())
     {
@@ -135,10 +137,9 @@ int main(int argc, char** argv)
         double ipart;
         auto radians = -2.0 * M_PI * modf(t / 100.0, &ipart);
         drone->setPosition(-5.0 * sin(radians), 5.0 * cos(radians), 3.0, radians + M_PI/2);
-        drone->setView(90.0, -45.0 + 10.0*sin(radians*10));
 
-        auto results = drone->frustum->getZIntercept(drone->frustumView->transform());
-        mo->update(results);
+        drone->frustum->update();
+        mo->update(drone->frustum);
 
         ship->setPosition(5.0 * sin(radians), -5.0 * cos(radians), radians - M_PI/2 + M_PI);
 

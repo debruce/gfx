@@ -25,15 +25,11 @@ MyDrone::MyDrone(vsg::ref_ptr<MyBuilder> builder, vsg::ref_ptr<vsg::Perspective>
         body = builder->createLathe(bat, 50, geomInfo, stateInfo);
         forwardView = AbsoluteLookAtTransform::create();
         forwardView->addChild(body);
-        // forwardView = LookAtTransform::create();
-        // forwardView->addChild(makeAxes(builder));
         addChild(forwardView);
     }
 
-    frustum = MyFrustum::create(proj, "lookTowardPosY");
-    frustumView = RelativeLookAtTransform::create(forwardView->lookAt);
-    frustumView->addChild(frustum);
-    addChild(frustumView);
+    frustum = MyFrustum::create(forwardView, proj, "lookTowardPosY");
+    addChild(frustum);
 }
 
 void MyDrone::setPosition(double x, double y, double alt, double azim)
@@ -43,13 +39,13 @@ void MyDrone::setPosition(double x, double y, double alt, double azim)
 
 void MyDrone::setView(double yaw, double pitch, double roll)
 {
-    frustumView->relativeView.matrix =
+    frustum->relativeView.matrix =
         vsg::rotate(-yaw*M_PI/180, 0.0, 0.0, 1.0)
         * vsg::rotate(pitch*M_PI/180, 1.0, 0.0, 0.0)
         * vsg::rotate(roll*M_PI/180, 0.0, 1.0, 0.0);
 }
 
-void MyDrone::setProjection(vsg::ref_ptr<vsg::Perspective> proj)
-{
-    frustum->update(proj);
-}
+// void MyDrone::setProjection(vsg::ref_ptr<vsg::Perspective> proj)
+// {
+//     frustum->update(proj);
+// }

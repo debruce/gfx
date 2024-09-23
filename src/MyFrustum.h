@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MyTransforms.h"
 #include <vsg/all.h>
 
 struct FrustumParams
@@ -10,11 +11,12 @@ struct FrustumParams
 
 using FrustumParamsValue = vsg::Value<FrustumParams>;
 
-class MyFrustum : public vsg::Inherit<vsg::MatrixTransform, MyFrustum> {
+class MyFrustum : public vsg::Inherit<RelativeLookAtTransform, MyFrustum> {
+public:
     vsg::dmat4 inverseProj;
     vsg::ref_ptr<FrustumParamsValue> frustumParams;
-public:
-    MyFrustum(vsg::ref_ptr<vsg::Perspective> proj, const std::string& orientation = std::string());
-    void update(vsg::ref_ptr<vsg::Perspective> proj);
-    std::array<vsg::dvec3, 4> getZIntercept(const vsg::dmat4& modelView);
+    std::array<vsg::dvec3, 4> corners;
+// public:
+    MyFrustum(vsg::ref_ptr<AbsoluteLookAtTransform> absTransform, vsg::ref_ptr<vsg::Perspective> proj, const std::string& orientation = std::string());
+    void update();
 };
