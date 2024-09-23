@@ -156,6 +156,7 @@ MyFrustum::MyFrustum(vsg::ref_ptr<AbsoluteLookAtTransform> absTransform, vsg::re
     else if (orientation == "lookTowardNegX") {
         flipper->matrix = rotate(M_PI/2, vsg::dvec3{0.0, 1.0, 0.0}) * rotate(-M_PI/2, vsg::dvec3{0.0, 0.0, 1.0});
     }
+    // flipper->matrix = flipper->matrix * rotate(-M_PI/2.0, dvec3{1.0, 0.0, 0.0});
 
     addChild(flipper);
 }
@@ -178,7 +179,9 @@ static std::array<vsg::dvec4, 8> rawCube = {
 
 void MyFrustum::update()
 {
-    auto m = transform() * vsg::rotate(M_PI/2.0, vsg::dvec3{1.0, 0.0, 0.0}) * inverseProj;
+    auto m = transform()
+        * vsg::rotate(M_PI/2.0, vsg::dvec3{1.0, 0.0, 0.0})
+        * inverseProj;
     for (auto i = 0; i < 4; i++) {
         auto near = hnorm(m * rawCube[i]);
         auto far = hnorm(m * rawCube[i+4]);

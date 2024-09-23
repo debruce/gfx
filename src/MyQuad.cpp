@@ -117,19 +117,7 @@ MyQuad::MyQuad(vsg::ref_ptr<vsg::Options> options)
     vid->indexCount = static_cast<uint32_t>(indices->size());
     vid->instanceCount = 1;
 
-    cout << "before read_cast" << endl;
     auto image = vsg::read_cast<vsg::Data>("../IMG_2791.jpg", options);
-    cout << "after read_cast image=" << image << endl;
-    // image = ubvec4Array2D::create(512, 512);
-    // for (auto i = 0; i < 512; i++) {
-    //     for (auto j = 0; j < 512; j++) {
-    //         if ((i & 64) == (j & 64))
-    //             image->at(i,j) = vsg::ubvec4{255, 0, 255, 255};
-    //         else
-    //             image->at(i,j) = vsg::ubvec4{0, 255, 0, 255};
-    //     }
-    // }
-    // image->properties.format = VK_FORMAT_R8G8B8A8_UNORM;
     image->properties.dataVariance = vsg::DYNAMIC_DATA;
     image->dirty();
 
@@ -165,7 +153,10 @@ void MyQuad::update(vsg::ref_ptr<MyFrustum> frustum)
     vertices->at(3) = narrow(frustum->corners[2]);
     vertices->dirty();
 
-    dmat4 m = inverse(frustum->inverseProj) * rotate(M_PI/2.0, dvec3{1.0, 0.0, 0.0}) * inverse(frustum->transform());
+    dmat4 m = inverse(frustum->inverseProj)
+        * inverse(frustum->transform()
+        * rotate(-M_PI/2.0, dvec3{1.0, 0.0, 0.0}))
+        ;
     for (size_t i = 0; i < 4; i++) {
         for (size_t j = 0; j < 4; j++) {
             projectiveUniform->value().inverseCombo[i][j] = float(m[i][j]);
