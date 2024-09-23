@@ -45,8 +45,8 @@ void main()
 {
     vec4 hCoord = (inverseCombo * vec4(world, 0.0, 1.0));
     vec2 lookupCoord = vec2(hCoord.x/hCoord.w, hCoord.y/hCoord.w) * vec2(.5, .5) + vec2(.5, .5);
-    // color = texture(texSampler, lookupCoord);
-    color = pattern(lookupCoord);
+    color = texture(texSampler, lookupCoord);
+    // color = pattern(lookupCoord);
     // color = vec4(lookupCoord.x, 0.0, lookupCoord.y, 1.0);
     // color = vec4(world.x, world.y, 0.0, 1.0);
 }
@@ -162,12 +162,7 @@ void MyQuad::update(vsg::ref_ptr<MyFrustum> frustum)
     vertices->at(3) = narrow(frustum->corners[2]);
     vertices->dirty();
 
-    dmat4 m = frustum->inverseProj * rotate(M_PI/2.0, dvec3{1.0, 0.0, 0.0}) * inverse(frustum->transform());
-    for (size_t i = 0; i < 4; i++) {
-        // auto r = rotate(M_PI/2.0, dvec3{1.0, 0.0, 0.0}) * inverse(frustum->transform()) * frustum->corners[i];
-        auto r = m * frustum->corners[i];
-        cout << i << ' ' << r << endl;
-    }
+    dmat4 m = inverse(frustum->inverseProj) * rotate(M_PI/2.0, dvec3{1.0, 0.0, 0.0}) * inverse(frustum->transform());
     for (size_t i = 0; i < 4; i++) {
         for (size_t j = 0; j < 4; j++) {
             projectiveUniform->value().inverseCombo[i][j] = float(m[i][j]);
