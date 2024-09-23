@@ -124,7 +124,7 @@ int main(int argc, char** argv)
     auto startTime = vsg::clock::now();
     size_t numFramesCompleted = 0;
 
-    drone->setView(90.0, -40.0);
+    drone->setView(0.0, -90.0);
 
     // rendering main loop
     while (viewer->advanceToNextFrame())
