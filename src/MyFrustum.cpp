@@ -127,10 +127,10 @@ MyFrustum::MyFrustum(vsg::ref_ptr<AbsoluteLookAtTransform> absTransform, vsg::re
     vid->indexCount = static_cast<uint32_t>(indices->size());
     vid->instanceCount = 1;
 
+    update(proj);
     frustumParams = FrustumParamsValue::create();
     frustumParams->properties.dataVariance = DataVariance::DYNAMIC_DATA;
-    inverseProj = inverse(proj->transform());
-    frustumParams->value().inverseProj = inverseProj;
+    frustumParams->value().inverseProj = inverseProjection;
     frustumParams->value().color = vsg::vec4{1.0, 1.0, 0.0, 1.0};
     auto frustumParamsDescriptor = DescriptorBuffer::create(frustumParams, 1, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 
@@ -176,11 +176,17 @@ static std::array<vsg::dvec4, 8> rawCube = {
     vsg::dvec4{+1.0, +1.0, 0.0, 1.0 },
 };
 
+void MyFrustum::update(vsg::ref_ptr<vsg::Perspective> proj)
+{
+    projection = proj->transform();
+    inverseProjection = inverse(proj->transform());
+}
+
 void MyFrustum::update()
 {
     auto m = transform()
         * vsg::rotate(M_PI/2.0, vsg::dvec3{1.0, 0.0, 0.0})
-        * inverseProj;
+        * inverseProjection;
     for (auto i = 0; i < 4; i++) {
         auto near = hnorm(m * rawCube[i]);
         auto far = hnorm(m * rawCube[i+4]);

@@ -153,7 +153,7 @@ void MyQuad::update(vsg::ref_ptr<MyFrustum> frustum)
     vertices->at(3) = narrow(frustum->corners[2]);
     vertices->dirty();
 
-    dmat4 m = inverse(frustum->inverseProj)
+    dmat4 m = frustum->projection
         * inverse(frustum->transform()
         * rotate(-M_PI/2.0, dvec3{1.0, 0.0, 0.0}))
         ;
