@@ -156,7 +156,6 @@ MyFrustum::MyFrustum(vsg::ref_ptr<AbsoluteLookAtTransform> absTransform, vsg::re
     else if (orientation == "lookTowardNegX") {
         flipper->matrix = rotate(M_PI/2, vsg::dvec3{0.0, 1.0, 0.0}) * rotate(-M_PI/2, vsg::dvec3{0.0, 0.0, 1.0});
     }
-    // flipper->matrix = flipper->matrix * rotate(-M_PI/2.0, dvec3{1.0, 0.0, 0.0});
 
     addChild(flipper);
 }

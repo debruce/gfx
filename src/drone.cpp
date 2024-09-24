@@ -35,6 +35,7 @@ vsg::ref_ptr<vsg::Node> generateFlatOcean(vsg::ref_ptr<vsg::Builder> builder)
     geomInfo.dy = vsg::vec3(0.0, 20.0, 0.0);
     geomInfo.dz = vsg::vec3(0.0, 0.0, 0.0);
     geomInfo.color = vsg::vec4{.15, .15, .15, 1.0};
+    geomInfo.position = vsg::vec3{0.0, 0.0, -.001};
     vsg::StateInfo stateInfo;
     stateInfo.two_sided = true;
     return builder->createQuad(geomInfo, stateInfo);
@@ -73,10 +74,9 @@ int main(int argc, char** argv)
 
     auto lineShader = makeLineShader();
     scene->addChild(makeXYGrid(lineShader, font, options, vsg::vec4{1.0, 1.0, 1.0, 1.0}, 1.5, 10, 1.0, true));
+    scene->addChild(generateFlatOcean(builder));
 
-    auto wideCamera = vsg::Perspective::create(30.0, 1.5, 0.1, 7.0);
-    auto narrowCamera = vsg::Perspective::create(10.0, 1.5, 0.1, 7.0);
-    // auto image = vsg::read_cast<vsg::Data>("../banana.jpg");
+    auto wideCamera = vsg::Perspective::create(30.0, 1.5, 0.1, 20.0);
     auto drone = MyDrone::create(builder, wideCamera, .3333);
     scene->addChild(drone);
 
@@ -125,8 +125,6 @@ int main(int argc, char** argv)
     auto startTime = vsg::clock::now();
     size_t numFramesCompleted = 0;
 
-    drone->setView(45.0, -45.0);
-
     // rendering main loop
     while (viewer->advanceToNextFrame())
     {
@@ -138,6 +136,7 @@ int main(int argc, char** argv)
         double ipart;
         auto radians = -2.0 * M_PI * modf(t / 100.0, &ipart);
         drone->setPosition(-5.0 * sin(radians), 5.0 * cos(radians), 3.0, radians + M_PI/2);
+        drone->setView(45.0, -45.0 + 10.0*sin(radians*20.0));
 
         drone->frustum->update();
         mo->update(drone->frustum);
