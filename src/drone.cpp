@@ -77,6 +77,7 @@ int main(int argc, char** argv)
     scene->addChild(generateFlatOcean(builder));
 
     auto wideCamera = vsg::Perspective::create(30.0, 1.5, 0.1, 20.0);
+    auto narrowCamera = vsg::Perspective::create(30.0, 1.5, 0.1, 20.0);
     auto drone = MyDrone::create(builder, wideCamera, .3333);
     scene->addChild(drone);
 
@@ -137,6 +138,14 @@ int main(int argc, char** argv)
         auto radians = -2.0 * M_PI * modf(t / 100.0, &ipart);
         drone->setPosition(-5.0 * sin(radians), 5.0 * cos(radians), 3.0, radians + M_PI/2);
         drone->setView(45.0, -45.0 + 10.0*sin(radians*20.0));
+        if (numFramesCompleted % 120 == 0) {
+            drone->frustum->update(wideCamera);
+            cout << "set wide" << endl;
+        }
+        else if (numFramesCompleted % 120 == 60) {
+            drone->frustum->update(narrowCamera);
+            cout << "set narrow" << endl;
+        }
 
         drone->frustum->update();
         mo->update(drone->frustum);

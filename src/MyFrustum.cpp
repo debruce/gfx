@@ -158,6 +158,7 @@ void MyFrustum::update(vsg::ref_ptr<vsg::Perspective> proj)
     using namespace vsg;
     projection = proj->transform() * rotate(-M_PI/2.0, dvec3{1.0, 0.0, 0.0});
     inverseProjection = inverse(projection);
+    if (frustumParams) frustumParams->dirty();
 }
 
 void MyFrustum::update()
