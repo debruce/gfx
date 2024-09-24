@@ -178,7 +178,7 @@ static std::array<vsg::dvec4, 8> rawCube = {
 
 void MyFrustum::update(vsg::ref_ptr<vsg::Perspective> proj)
 {
-    projection = proj->transform();
+    projection = proj->transform() * vsg::rotate(-M_PI/2.0, vsg::dvec3{1.0, 0.0, 0.0});
     inverseProjection = inverse(proj->transform());
 }
 

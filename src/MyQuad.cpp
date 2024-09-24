@@ -153,11 +153,7 @@ void MyQuad::update(vsg::ref_ptr<MyFrustum> frustum)
     vertices->at(3) = narrow(frustum->corners[2]);
     vertices->dirty();
 
-    dmat4 m = frustum->projection
-        * rotate(-M_PI/2.0, dvec3{1.0, 0.0, 0.0})
-        * inverse(frustum->transform())
-        // * rotate(-M_PI/2.0, dvec3{1.0, 0.0, 0.0}))
-        ;
+    dmat4 m = frustum->projection * inverse(frustum->transform());
     for (size_t i = 0; i < 4; i++) {
         for (size_t j = 0; j < 4; j++) {
             projectiveUniform->value().inverseCombo[i][j] = float(m[i][j]);
