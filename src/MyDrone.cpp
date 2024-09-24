@@ -28,7 +28,7 @@ MyDrone::MyDrone(vsg::ref_ptr<MyBuilder> builder, vsg::ref_ptr<vsg::Perspective>
         addChild(forwardView);
     }
 
-    frustum = MyFrustum::create(forwardView, proj, "lookTowardPosY");
+    frustum = MyFrustum::create(forwardView, proj);
     addChild(frustum);
 }
 

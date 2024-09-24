@@ -44,7 +44,7 @@ void main()
 
 using namespace std;
 
-MyFrustum::MyFrustum(vsg::ref_ptr<AbsoluteLookAtTransform> absTransform, vsg::ref_ptr<vsg::Perspective> proj, const std::string& orientation)
+MyFrustum::MyFrustum(vsg::ref_ptr<AbsoluteLookAtTransform> absTransform, vsg::ref_ptr<vsg::Perspective> proj)
  : vsg::Inherit<RelativeLookAtTransform, MyFrustum>(absTransform->lookAt)
 {
     using namespace vsg;
@@ -144,19 +144,7 @@ MyFrustum::MyFrustum(vsg::ref_ptr<AbsoluteLookAtTransform> absTransform, vsg::re
 
     auto flipper = MatrixTransform::create();
     flipper->addChild(stateGroup);
-    if (orientation == "lookTowardPosY") {
-        flipper->matrix = rotate(M_PI/2, vsg::dvec3{1.0, 0.0, 0.0}) * rotate(M_PI, vsg::dvec3{0.0, 0.0, 1.0});
-    }
-    if (orientation == "lookTowardNegY") {
-        flipper->matrix = rotate(-M_PI/2, vsg::dvec3{1.0, 0.0, 0.0});
-    }
-    else if (orientation == "lookTowardPosX") {
-        flipper->matrix = rotate(-M_PI/2, vsg::dvec3{0.0, 1.0, 0.0}) * rotate(M_PI/2, vsg::dvec3{0.0, 0.0, 1.0});
-    }
-    else if (orientation == "lookTowardNegX") {
-        flipper->matrix = rotate(M_PI/2, vsg::dvec3{0.0, 1.0, 0.0}) * rotate(-M_PI/2, vsg::dvec3{0.0, 0.0, 1.0});
-    }
-
+    flipper->matrix = rotate(M_PI, vsg::dvec3{1.0, 0.0, 0.0}) * rotate(M_PI, vsg::dvec3{0.0, 0.0, 1.0});
     addChild(flipper);
 }
 
@@ -165,28 +153,29 @@ vsg::dvec3 hnorm(const vsg::dvec4 vec)
     return vsg::dvec3{vec.x/vec.w, vec.y/vec.w, vec.z/vec.w};
 }
 
-static std::array<vsg::dvec4, 8> rawCube = {
-    vsg::dvec4{-1.0, -1.0, 1.0, 1.0 }, // small end vertices
-    vsg::dvec4{+1.0, -1.0, 1.0, 1.0 },
-    vsg::dvec4{-1.0, +1.0, 1.0, 1.0 },
-    vsg::dvec4{+1.0, +1.0, 1.0, 1.0 },
-    vsg::dvec4{-1.0, -1.0, 0.0, 1.0 }, // large end vertices
-    vsg::dvec4{+1.0, -1.0, 0.0, 1.0 },
-    vsg::dvec4{-1.0, +1.0, 0.0, 1.0 },
-    vsg::dvec4{+1.0, +1.0, 0.0, 1.0 },
-};
-
 void MyFrustum::update(vsg::ref_ptr<vsg::Perspective> proj)
 {
-    projection = proj->transform() * vsg::rotate(-M_PI/2.0, vsg::dvec3{1.0, 0.0, 0.0});
-    inverseProjection = inverse(proj->transform());
+    using namespace vsg;
+    projection = proj->transform() * rotate(-M_PI/2.0, dvec3{1.0, 0.0, 0.0});
+    inverseProjection = inverse(projection);
 }
 
 void MyFrustum::update()
 {
-    auto m = transform()
-        * vsg::rotate(M_PI/2.0, vsg::dvec3{1.0, 0.0, 0.0})
-        * inverseProjection;
+    using namespace vsg;
+
+    static std::array<dvec4, 8> rawCube = {
+        dvec4{-1.0, -1.0, 1.0, 1.0 }, // small end vertices
+        dvec4{+1.0, -1.0, 1.0, 1.0 },
+        dvec4{-1.0, +1.0, 1.0, 1.0 },
+        dvec4{+1.0, +1.0, 1.0, 1.0 },
+        dvec4{-1.0, -1.0, 0.0, 1.0 }, // large end vertices
+        dvec4{+1.0, -1.0, 0.0, 1.0 },
+        dvec4{-1.0, +1.0, 0.0, 1.0 },
+        dvec4{+1.0, +1.0, 0.0, 1.0 },
+    };
+
+    auto m = transform() * inverseProjection;
     for (auto i = 0; i < 4; i++) {
         auto near = hnorm(m * rawCube[i]);
         auto far = hnorm(m * rawCube[i+4]);

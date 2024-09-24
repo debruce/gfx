@@ -18,7 +18,7 @@ public:
     vsg::ref_ptr<FrustumParamsValue> frustumParams;
     std::array<vsg::dvec3, 4> corners;
 // public:
-    MyFrustum(vsg::ref_ptr<AbsoluteLookAtTransform> absTransform, vsg::ref_ptr<vsg::Perspective> proj, const std::string& orientation = std::string());
+    MyFrustum(vsg::ref_ptr<AbsoluteLookAtTransform> absTransform, vsg::ref_ptr<vsg::Perspective> proj);
     void update(vsg::ref_ptr<vsg::Perspective> proj);
     void update();
 };
